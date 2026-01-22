@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 
@@ -11,22 +11,41 @@ export const Home: React.FC<HomeProps> = ({ currentLang, onStartClick }) => {
   const t = TRANSLATIONS[currentLang];
   const l = t.landing;
 
+  const heroImages = [
+    "https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070&auto=format&fit=crop", // Library
+    "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=2072&auto=format&fit=crop", // Gavel/Justice
+    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop", // Students
+    "https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=2086&auto=format&fit=crop"  // Modern Building
+  ];
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
       <div className="relative bg-navy-900 text-white overflow-hidden min-h-[600px] flex items-center">
-        {/* Background Image & Overlay */}
+        {/* Background Image Carousel & Overlay */}
         <div className="absolute inset-0 z-0">
-          <img 
-            // Bright university library image with large windows
-            src="https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070&auto=format&fit=crop" 
-            alt="University Library" 
-            className="w-full h-full object-cover"
-          />
-          {/* Lightened Gradient Overlay: Much more transparent on the right to show the image */}
+          {heroImages.map((src, index) => (
+             <img 
+               key={index}
+               src={src} 
+               alt="Background" 
+               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
+             />
+          ))}
+
+          {/* Lightened Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-navy-900/95 via-navy-900/60 to-transparent"></div>
           
-          {/* AI Tech Pattern Overlay - very subtle */}
+          {/* AI Tech Pattern Overlay */}
           <div className="absolute inset-0 opacity-5 pointer-events-none" 
                style={{ 
                  backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)', 
@@ -64,23 +83,53 @@ export const Home: React.FC<HomeProps> = ({ currentLang, onStartClick }) => {
             </div>
           </div>
         </div>
+        
+        {/* Carousel Indicators */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            {heroImages.map((_, index) => (
+                <button 
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/70'}`}
+                />
+            ))}
+        </div>
       </div>
 
-      {/* Trust Badge Bar */}
-      <div className="bg-white border-b border-slate-100 py-8 relative z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap gap-8 items-center justify-center md:justify-start text-slate-400 font-bold text-xs tracking-widest uppercase">
-           <span className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-default">
-             <div className="p-1.5 bg-slate-100 rounded-full"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg></div>
+      {/* Trust Badge Bar - Slimmer with more items */}
+      <div className="bg-white border-b border-slate-100 py-3 relative z-20 shadow-sm overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-4 flex flex-nowrap md:flex-wrap gap-8 md:gap-12 items-center min-w-max md:min-w-0 justify-start md:justify-center text-slate-400 font-bold text-[10px] md:text-xs tracking-widest uppercase">
+           
+           <span className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default whitespace-nowrap">
+             <div className="p-1 bg-slate-100 rounded-full"><svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg></div>
              TSUL Standard
            </span>
-           <span className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-default">
-             <div className="p-1.5 bg-slate-100 rounded-full"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
+           
+           <span className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default whitespace-nowrap">
+             <div className="p-1 bg-slate-100 rounded-full"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
+             Gemini 3 Pro
+           </span>
+
+           <span className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default whitespace-nowrap">
+             <div className="p-1 bg-slate-100 rounded-full"><svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
              Global Access
            </span>
-           <span className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-default">
-             <div className="p-1.5 bg-slate-100 rounded-full"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
+
+           <span className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default whitespace-nowrap">
+             <div className="p-1 bg-slate-100 rounded-full"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>
+             LexUZ Integration
+           </span>
+
+           <span className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default whitespace-nowrap">
+             <div className="p-1 bg-slate-100 rounded-full"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>
+             Data Privacy
+           </span>
+           
+           <span className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-default whitespace-nowrap">
+             <div className="p-1 bg-slate-100 rounded-full"><svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
              Academic Integrity
            </span>
+
         </div>
       </div>
 

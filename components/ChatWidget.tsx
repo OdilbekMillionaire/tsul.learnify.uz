@@ -62,8 +62,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
   };
 
   return (
-    <div className="flex flex-col h-[600px] bg-white">
-      <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-slate-50/50">
+    <div className="flex flex-col h-[600px] print:h-auto bg-white chat-widget-root">
+      <div className="flex-grow overflow-y-auto print:overflow-visible p-6 space-y-6 bg-slate-50/50 chat-messages-area">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
             {msg.role === 'model' && (
@@ -95,7 +95,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-white border-t border-slate-100">
+      <div className="p-4 bg-white border-t border-slate-100 print:hidden no-print">
         <div className="flex gap-2 items-end bg-slate-50 border border-slate-200 rounded-xl p-2 focus-within:ring-2 focus-within:ring-gold-500/50 focus-within:border-gold-500 transition-all shadow-sm">
             <textarea
             ref={textareaRef}

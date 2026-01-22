@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language, LessonFormState, AcademicLevel, LessonDepth, SimplicityLevel, LessonFocus } from '../types';
-import { TRANSLATIONS, TSUL_MODULES } from '../constants';
+import { TRANSLATIONS, MODULES_BY_LANGUAGE, MODULE_DESCRIPTIONS } from '../constants';
 
 interface LessonFormProps {
   currentLang: Language;
@@ -11,6 +11,8 @@ interface LessonFormProps {
 
 export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, isLoading, error }) => {
   const t = TRANSLATIONS[currentLang];
+  const modules = MODULES_BY_LANGUAGE[currentLang];
+
   const [form, setForm] = useState<LessonFormState>({
     module: '',
     topic: '',
@@ -32,9 +34,37 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
     }
   });
 
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+  
+  const loadingMessages = [
+    "Analyzing academic databases...",
+    "Structuring legal arguments...",
+    "Retrieving case law precedents...",
+    "Synthesizing theoretical concepts...",
+    "Verifying academic compliance...",
+    "Finalizing lesson format..."
+  ];
+
+  useEffect(() => {
+    if (isLoading) {
+      const interval = setInterval(() => {
+        setLoadingMsgIndex(prev => (prev + 1) % loadingMessages.length);
+      }, 2000);
+      return () => clearInterval(interval);
+    } else {
+      setLoadingMsgIndex(0);
+    }
+  }, [isLoading]);
+
   const handleSubmit = () => {
     if (!form.module || !form.topic) return;
     onSubmit(form);
+  };
+
+  const getModuleDescription = (modName: string) => {
+    if (!modName) return null;
+    const descriptions = MODULE_DESCRIPTIONS[currentLang] as Record<string, string>;
+    return descriptions[modName] || descriptions['default'];
   };
 
   if (isLoading) {
@@ -48,7 +78,9 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
               </svg>
            </div>
            <h2 className="font-serif text-3xl font-bold text-navy-900 mb-2">{t.generating}</h2>
-           <p className="text-slate-500 max-w-md mx-auto animate-pulse">Analyzing academic databases and structuring legal precedents...</p>
+           <p className="text-slate-500 max-w-md mx-auto animate-pulse font-medium min-h-[1.5rem] transition-opacity duration-300">
+             {loadingMessages[loadingMsgIndex]}
+           </p>
         </div>
         
         <div className="max-w-md mx-auto bg-white rounded-lg p-6 shadow-sm border border-slate-100 space-y-3 opacity-60">
@@ -69,7 +101,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
     <div className="max-w-5xl mx-auto px-4 py-16 animate-fade-in-up">
       <div className="mb-12">
         <h1 className="font-serif text-4xl font-bold text-navy-900 mb-3">{t.configure}</h1>
-        <p className="text-slate-500 text-lg">Customize the parameters for your AI-generated legal lesson.</p>
+        <p className="text-slate-500 text-lg">{t.configureSubtitle}</p>
       </div>
 
       {error && (
@@ -108,13 +140,24 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
                     onChange={(e) => setForm({...form, module: e.target.value})}
                   >
                     <option value="">{t.selectModule}</option>
-                    {TSUL_MODULES.map(m => <option key={m} value={m}>{m}</option>)}
+                    {modules.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </div>
+                  {/* Module Description Display */}
+                  {form.module && (
+                    <div className="mt-3 flex items-start gap-2 p-3 bg-slate-50 rounded-lg border border-slate-100 animate-fade-in-up">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gold-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-xs text-slate-500 italic leading-relaxed">
+                            {getModuleDescription(form.module)}
+                        </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

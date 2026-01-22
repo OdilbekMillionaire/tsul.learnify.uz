@@ -49,10 +49,27 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangCha
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo Area */}
           <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
-            <div className="bg-navy-900 text-white p-2.5 rounded-lg shadow-md group-hover:bg-navy-800 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
+            <div className="bg-navy-900 text-white p-2 rounded-xl shadow-lg group-hover:bg-navy-800 transition-colors border border-navy-700">
+               {/* New Original Logo: Combines Pillar (Law) + Book (Education) + Circuit (AI) */}
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" className="w-8 h-8">
+                  {/* Abstract Open Book / Shield Base */}
+                  <path d="M20 34C14 34 8 30 6 24V10C8 12 14 13 20 13C26 13 32 12 34 10V24C32 30 26 34 20 34Z" fill="currentColor" fillOpacity="0.2"/>
+                  
+                  {/* The Pillar of Justice (Central Column) */}
+                  <rect x="18" y="16" width="4" height="14" rx="1" fill="#fbbf24" />
+                  <path d="M16 32H24" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M16 16H24" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"/>
+
+                  {/* The AI Spark / Digital Brain (Top) */}
+                  <path d="M20 6L22 10H18L20 6Z" fill="#fbbf24" />
+                  <circle cx="20" cy="13" r="2" fill="white" />
+                  
+                  {/* Circuit Nodes representing Tech */}
+                  <circle cx="12" cy="18" r="1.5" fill="currentColor" />
+                  <circle cx="28" cy="18" r="1.5" fill="currentColor" />
+                  <path d="M13.5 18H16.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
+                  <path d="M23.5 18H26.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
+               </svg>
             </div>
             <div className="flex flex-col">
               <span className="font-serif text-xl font-bold tracking-tight text-navy-900 leading-none">
@@ -120,15 +137,67 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangCha
         {children}
       </main>
 
-      <footer className="bg-white border-t border-slate-200 py-10 mt-12 no-print">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-navy-900 text-white rounded flex items-center justify-center text-xs font-bold">L</div>
-            <span className="font-serif text-navy-900 font-bold text-sm">LEARNIFY</span>
-          </div>
-          <div className="text-slate-500 text-sm">
-            &copy; {new Date().getFullYear()} Oxforder MCHJ. Academic License.
-          </div>
+      {/* Dark Footer */}
+      <footer className="bg-navy-900 text-slate-300 py-16 border-t border-navy-800 font-sans no-print mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+            
+            {/* Brand Section */}
+            <div className="md:col-span-4 flex flex-col items-start">
+                <div className="flex items-center gap-3 mb-6">
+                <div className="bg-navy-800 text-white p-2 rounded-xl shadow-lg border border-navy-700">
+                    {/* Small Logo */}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" className="w-6 h-6">
+                        <path d="M20 34C14 34 8 30 6 24V10C8 12 14 13 20 13C26 13 32 12 34 10V24C32 30 26 34 20 34Z" fill="currentColor" fillOpacity="0.2"/>
+                        <rect x="18" y="16" width="4" height="14" rx="1" fill="#fbbf24" />
+                        <path d="M16 32H24" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M16 16H24" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M20 6L22 10H18L20 6Z" fill="#fbbf24" />
+                    </svg>
+                    </div>
+                    <span className="font-serif text-2xl font-bold text-white tracking-tight">Learnify</span>
+                </div>
+                <p className="text-slate-400 text-base font-medium">{t.footerTagline}</p>
+            </div>
+
+            {/* Platform Links */}
+            <div className="md:col-span-3 md:col-start-6">
+                <h4 className="text-white font-bold uppercase tracking-widest text-xs mb-6 opacity-80">{t.platform}</h4>
+                <ul className="space-y-4">
+                    <li>
+                    <button onClick={() => onNavigate('landing')} className="text-slate-400 hover:text-white transition-colors text-sm">{t.home}</button>
+                    </li>
+                    <li>
+                    <button onClick={() => onNavigate('create')} className="text-slate-400 hover:text-white transition-colors text-sm">{t.newLesson}</button>
+                    </li>
+                    <li>
+                    <button onClick={() => onNavigate('about')} className="text-slate-400 hover:text-white transition-colors text-sm">{t.about}</button>
+                    </li>
+                </ul>
+            </div>
+
+            {/* Legal Disclaimer */}
+            <div className="md:col-span-4 md:col-start-9">
+                <h4 className="text-white font-bold uppercase tracking-widest text-xs mb-6 opacity-80">{t.legalDisclaimer}</h4>
+                <div className="border-l-2 border-gold-500 pl-6">
+                    <p className="text-slate-400 text-sm leading-relaxed opacity-90">
+                        {t.disclaimerText}
+                    </p>
+                </div>
+            </div>
+
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="border-t border-navy-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+                <div>{t.copyright}</div>
+                <div className="flex gap-8">
+                    <a href="#" className="hover:text-slate-300 transition-colors">{t.privacyPolicy}</a>
+                    <a href="#" className="hover:text-slate-300 transition-colors">{t.termsOfService}</a>
+                    <a href="#" className="hover:text-slate-300 transition-colors">{t.support}</a>
+                </div>
+            </div>
+
         </div>
       </footer>
     </div>

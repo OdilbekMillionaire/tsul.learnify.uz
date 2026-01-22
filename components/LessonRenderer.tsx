@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LessonResponse, Language, ChatMessage } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ChatWidget } from './ChatWidget';
@@ -13,13 +13,39 @@ interface LessonRendererProps {
 
 export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLang, onBack, chatHistory, onChatHistoryChange }) => {
   const t = TRANSLATIONS[currentLang];
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const handleDownload = () => {
-    window.print();
+    setIsDownloading(true);
+    // Allow React to apply the pdf-exporting class before capturing
+    setTimeout(() => {
+        const element = document.getElementById('lesson-content-area');
+        const opt = {
+          margin: [10, 10, 10, 10], // top, left, bottom, right in mm
+          filename: `${data.title.replace(/[^a-z0-9]/gi, '_').substring(0, 30)}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        // Check if html2pdf is loaded
+        // @ts-ignore
+        if (window.html2pdf) {
+            // @ts-ignore
+            window.html2pdf().set(opt).from(element).save().then(() => {
+                setIsDownloading(false);
+            });
+        } else {
+            // Fallback
+            window.print();
+            setIsDownloading(false);
+        }
+    }, 100);
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 pb-32 animate-fade-in-up">
+    <div className="max-w-7xl mx-auto px-4 py-8 pb-32 animate-fade-in-up print:pb-0">
       {/* Top Navigation */}
       <div className="flex items-center justify-between mb-8 no-print">
         <button onClick={onBack} className="flex items-center text-slate-500 hover:text-navy-900 transition-colors font-medium">
@@ -34,22 +60,30 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
         <div className="flex gap-3">
           <button 
             onClick={handleDownload}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+            disabled={isDownloading}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm disabled:opacity-50"
           >
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-             </svg>
-             {t.downloadPdf}
+             {isDownloading ? (
+               <svg className="animate-spin h-4 w-4 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+             ) : (
+               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+               </svg>
+             )}
+             {isDownloading ? 'Generating PDF...' : t.downloadPdf}
           </button>
         </div>
       </div>
 
-      <div className="print-content grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div 
+        id="lesson-content-area" 
+        className={`print-content grid grid-cols-1 lg:grid-cols-12 print:grid-cols-12 gap-8 print:gap-6 ${isDownloading ? 'pdf-exporting' : ''}`}
+      >
         
         {/* SIDEBAR (Left on desktop) */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 print:col-span-4 space-y-6">
           {/* Metadata Card */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm sticky top-24">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm sticky top-24 print:static print:border print:shadow-none">
              <span className="text-xs font-bold tracking-widest text-gold-600 uppercase mb-2 block">{data.module}</span>
              <h1 className="font-serif text-2xl font-bold text-navy-900 mb-6 leading-tight">{data.title}</h1>
              
@@ -70,7 +104,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t.concepts}</h3>
                     <div className="flex flex-wrap gap-2">
                         {data.concepts.map((c, i) => (
-                            <span key={i} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium border border-slate-200">
+                            <span key={i} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium border border-slate-200 print:border-slate-300">
                             {c}
                             </span>
                         ))}
@@ -93,12 +127,12 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
         </div>
 
         {/* MAIN CONTENT (Right on desktop) */}
-        <div className="lg:col-span-8 space-y-8">
+        <div className="lg:col-span-8 print:col-span-8 space-y-8 print:space-y-6">
             
             {/* Definition */}
-            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm">
+            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
                 <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
-                    <span className="w-1 h-8 bg-gold-500 rounded-full"></span>
+                    <span className="w-1 h-8 bg-gold-500 rounded-full print:bg-gold-500"></span>
                     {data.definitionAndStructure.title}
                 </h2>
                 <div className="prose prose-slate prose-lg max-w-none text-slate-700 leading-relaxed text-justify">
@@ -107,7 +141,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
             </div>
 
             {/* Historical Development */}
-            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm">
+            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
                 <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
                     <span className="w-1 h-8 bg-gold-500 rounded-full"></span>
                     {data.historicalDevelopment.title}
@@ -119,7 +153,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Comparative Analysis (Optional) */}
             {data.comparativeAnalysis && (
-                <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
                     <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
                         <span className="w-1 h-8 bg-purple-500 rounded-full"></span>
                         {data.comparativeAnalysis.title || t.comparativeAnalysis}
@@ -132,16 +166,16 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Case Law Grid */}
             {data.courtCases && data.courtCases.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-4 print:break-inside-avoid">
                     <h2 className="font-serif text-2xl font-bold text-navy-900 mb-4 flex items-center gap-3 px-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-navy-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
                         </svg>
                         {t.caseLaw}
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4">
                         {data.courtCases.map((c, i) => (
-                            <div key={i} className="bg-slate-50 p-6 rounded-xl border border-slate-200 hover:border-gold-300 transition-colors group">
+                            <div key={i} className="bg-slate-50 p-6 rounded-xl border border-slate-200 hover:border-gold-300 transition-colors group print:border-slate-300 print:bg-slate-50">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{c.year}</span>
                                     <span className="text-[10px] font-semibold text-navy-800 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-sm">{c.court}</span>
@@ -159,7 +193,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Practical Exercises (Optional) */}
             {data.practicalExercises && data.practicalExercises.length > 0 && (
-                 <div className="bg-blue-50 p-8 rounded-xl border border-blue-100">
+                 <div className="bg-blue-50 p-8 rounded-xl border border-blue-100 print:bg-blue-50 print:border-blue-200 print:break-inside-avoid">
                     <h2 className="font-serif text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -168,10 +202,10 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                     </h2>
                     <div className="space-y-6">
                         {data.practicalExercises.map((ex, i) => (
-                            <div key={i} className="bg-white p-6 rounded-lg shadow-sm">
+                            <div key={i} className="bg-white p-6 rounded-lg shadow-sm print:border print:border-slate-200 print:shadow-none">
                                 <h4 className="font-bold text-navy-900 mb-2">Scenario {i+1}:</h4>
                                 <p className="text-slate-700 italic mb-4 text-sm">{ex.question}</p>
-                                <div className="bg-slate-50 p-4 rounded text-sm text-slate-600 border-l-2 border-gold-500">
+                                <div className="bg-slate-50 p-4 rounded text-sm text-slate-600 border-l-2 border-gold-500 print:bg-slate-50">
                                     <span className="font-bold text-gold-700 block mb-1">Answer / Guidance:</span>
                                     {ex.answer}
                                 </div>
@@ -183,7 +217,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Doctrines */}
             {data.legalDoctrines && data.legalDoctrines.length > 0 && (
-                <div className="bg-[#fffbf0] p-8 rounded-xl border border-gold-100 relative overflow-hidden">
+                <div className="bg-[#fffbf0] p-8 rounded-xl border border-gold-100 relative overflow-hidden print:bg-[#fffbf0] print:border-gold-200 print:break-inside-avoid">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
                         <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg>
                     </div>
@@ -205,7 +239,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
              {/* Glossary (Optional) */}
              {data.glossary && data.glossary.length > 0 && (
-                <div className="bg-white p-8 rounded-xl border border-slate-200">
+                <div className="bg-white p-8 rounded-xl border border-slate-200 print:border print:shadow-none">
                     <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6">{t.glossary}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                         {data.glossary.map((item, i) => (
@@ -220,7 +254,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
              {/* Bibliography (Optional) */}
              {data.bibliography && data.bibliography.length > 0 && (
-                <div className="bg-slate-50 p-8 rounded-xl border border-slate-200">
+                <div className="bg-slate-50 p-8 rounded-xl border border-slate-200 print:bg-slate-50 print:border">
                     <h2 className="font-serif text-xl font-bold text-navy-900 mb-4">{t.bibliography}</h2>
                     <ul className="list-disc list-inside space-y-2 text-sm text-slate-700">
                         {data.bibliography.map((item, i) => (
@@ -231,7 +265,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
             )}
 
             {/* Conclusion */}
-            <div className="bg-navy-900 text-slate-300 p-8 rounded-xl border border-navy-800 shadow-lg">
+            <div className="bg-navy-900 text-slate-300 p-8 rounded-xl border border-navy-800 shadow-lg print:bg-navy-900 print:text-slate-300 print:break-inside-avoid">
                 <h2 className="font-serif text-xl font-bold text-white mb-4">{t.conclusion}</h2>
                 <p className="leading-relaxed text-justify font-light">
                     {data.conclusion}
@@ -239,9 +273,9 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
             </div>
 
             {/* Chat Widget */}
-            <div className="mt-12 no-print">
-                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
+            <div className="mt-12 print:break-inside-avoid">
+                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden print:overflow-visible print:shadow-none print:border print:border-slate-300">
+                    <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between print:bg-slate-100">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm">
                                 <span className="text-xl">🤖</span>
@@ -249,7 +283,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                             <div>
                                 <h3 className="font-bold text-navy-900 text-sm">{t.aiTeacher}</h3>
                                 <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 print:border print:border-green-600"></span>
                                     Online
                                 </p>
                             </div>

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { LessonFormState, LessonResponse, Language } from '../types';
+import { LessonFormState, LessonResponse, Language, LessonFocus } from '../types';
 
 // In a real Next.js App, this would be a server-side route handler to protect the API key.
 // For this single-file export demo, we access it from process.env.
@@ -42,17 +42,58 @@ const contentSectionSchema: Schema = {
   required: ['title', 'content']
 };
 
+// Helper to determine the AI's persona based on the module
+const getExpertPersona = (moduleName: string): string => {
+  const m = moduleName.toLowerCase();
+  if (m.includes('jinoyat') || m.includes('criminal') || m.includes('ugolovnoe') || m.includes('уголовное')) {
+    return "a Senior Expert in Criminal Law & Criminology";
+  }
+  if (m.includes('fuqarolik') || m.includes('civil') || m.includes('grazhdanskoe') || m.includes('гражданское')) {
+    return "a Distinguished Professor of Civil Law";
+  }
+  if (m.includes('xalqaro') || m.includes('international') || m.includes('mezhdunarodnoe') || m.includes('международное')) {
+    return "a Scholar of International Law and Diplomacy";
+  }
+  if (m.includes('biznes') || m.includes('business') || m.includes('corporate') || m.includes('korporativ') || m.includes('корпоратив')) {
+    return "a Leading Corporate Law Consultant";
+  }
+  if (m.includes('konstitutsiya') || m.includes('constitutional') || m.includes('konstitutsiyaviy')) {
+    return "a Constitutional Law Scholar";
+  }
+  return "a Senior Professor";
+};
+
 export const generateLesson = async (form: LessonFormState, language: Language): Promise<LessonResponse> => {
   const modelId = 'gemini-3-pro-preview'; // High capability model for structured output
 
-  // 1. Build Dynamic Prompt Requirements
+  // 1. Dynamic Persona
+  const persona = getExpertPersona(form.module);
+
+  // 2. Dynamic Focus Instruction
+  let focusInstruction = "";
+  switch(form.focus) {
+    case LessonFocus.THEORETICAL:
+      focusInstruction = "Focus strictly on legal dogmatics, historical evolution, and the philosophical basis of the law. Minimize practical scenarios in favor of deep theoretical analysis.";
+      break;
+    case LessonFocus.PRACTICAL:
+      focusInstruction = "Focus strictly on application. Explain how to draft documents, procedural steps in court, and common pitfalls for practicing lawyers. Use language suited for a future attorney.";
+      break;
+    case LessonFocus.CASE_BASED:
+      focusInstruction = "Center the entire lesson around specific court decisions (precedents) and case studies. Use the 'Case Method' to explain principles.";
+      break;
+    case LessonFocus.LEGISLATIVE:
+      focusInstruction = "Focus on statutory interpretation. Conduct a line-by-line exegesis of specific articles from the relevant Codes (e.g., Civil Code or Criminal Code of Uzbekistan).";
+      break;
+  }
+
+  // 3. Build Dynamic Prompt Requirements
   let structureReqs = "";
   if (form.structure.comparativeAnalysis) structureReqs += "- Include a 'comparativeAnalysis' section comparing this topic with other jurisdictions (e.g. Roman Law, UK, USA, Germany).\n";
   if (form.structure.practicalExercises) structureReqs += "- Include 'practicalExercises' with hypothetical legal scenarios and answers.\n";
   if (form.structure.glossary) structureReqs += "- Include a 'glossary' of key legal terms.\n";
   if (form.structure.bibliography) structureReqs += "- Include a 'bibliography' of standard textbooks or codes.\n";
 
-  // 2. Build Dynamic Schema Validation
+  // 4. Build Dynamic Schema Validation
   // We strictly require fields if the user asked for them.
   const requiredFields = [
     'title', 
@@ -116,17 +157,19 @@ export const generateLesson = async (form: LessonFormState, language: Language):
   };
 
   const prompt = `
-    You are a Professor at TSUL (Tashkent State University of Law).
-    Generate a university-grade academic lesson.
+    Role: You are ${persona} at TSUL (Tashkent State University of Law).
+    Task: Generate a high-fidelity, university-grade academic lesson.
     
-    Parameters:
+    Context:
     - Language: ${language} (STRICTLY OUTPUT IN THIS LANGUAGE)
     - Module: ${form.module}
     - Topic: ${form.topic}
     - Level: ${form.level}
     - Depth: ${form.depth}
     - Audience Simplicity: ${form.simplicity} (Adjust vocabulary and tone accordingly)
-    - Lesson Focus: ${form.focus} (Ensure the content strongly aligns with this perspective)
+    
+    Teaching Strategy:
+    ${focusInstruction}
     
     Structure Requirements:
     - Include strictly valid JSON matching the schema.
@@ -166,8 +209,10 @@ export const chatWithAssistant = async (
 ) => {
   const modelId = 'gemini-3-flash-preview'; // Faster model for chat
   
+  const persona = getExpertPersona(lessonContext.module);
+
   const systemInstruction = `
-    You are an AI Lecturer at TSUL. 
+    You are ${persona} at TSUL. 
     You are currently teaching a lesson titled "${lessonContext.title}" from the module "${lessonContext.module}".
     
     Context of the lesson:
