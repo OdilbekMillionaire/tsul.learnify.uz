@@ -313,7 +313,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
                           </svg>
                        </div>
                        <span className="ml-3 text-sm font-medium text-slate-600 group-hover:text-navy-900 transition-colors">
-                          {t[key as keyof typeof t]}
+                          {t[key as keyof typeof t] as string}
                        </span>
                     </label>
                  ))}
