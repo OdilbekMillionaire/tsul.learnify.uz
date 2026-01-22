@@ -58,7 +58,7 @@ export const MODULES_BY_LANGUAGE = {
     "Inson huquqlari",
     "Intellektual mulk huquqi",
     "Investitsiya huquqi",
-    "Islom (Musulmon) huquqi",
+    "Islom huquqi",
     "Jinoyat huquqi",
     "Jinoyat protsessual huquqi",
     "Jinoyat-ijroiya huquqi",
@@ -102,7 +102,7 @@ export const MODULES_BY_LANGUAGE = {
     "Инсон ҳуқуқлари",
     "Интеллектуал мулк ҳуқуқи",
     "Инвестиция ҳуқуқи",
-    "Ислом (Мусулмон) ҳуқуқи",
+    "Ислом ҳуқуқи",
     "Жиноят ҳуқуқи",
     "Жиноят процессуал ҳуқуқи",
     "Жиноят-ижроия ҳуқуқи",
@@ -146,7 +146,7 @@ export const MODULES_BY_LANGUAGE = {
     "Human Rights",
     "Intellectual Property Law",
     "Investment Law",
-    "Islamic (Muslim) Law",
+    "Islamic Law",
     "Criminal Law",
     "Criminal Procedural Law",
     "Penal (Correctional) Law",
@@ -190,7 +190,7 @@ export const MODULES_BY_LANGUAGE = {
     "Права человека",
     "Право интеллектуальной собственности",
     "Инвестиционное право",
-    "Исламское (Мусульманское) право",
+    "Исламское право",
     "Уголовное право",
     "Уголовно-процессуальное право",
     "Уголовно-исполнительное право",
@@ -281,7 +281,30 @@ export const TRANSLATIONS = {
       aiTitle: "AI texnologiyasi",
       aiText: "Google Gemini 3 Pro modellari asosida ishlovchi tizim har bir talabaning ehtiyojiga moslashtirilgan noyob darslarni yaratadi.",
       teamTitle: "Ishlab chiqaruvchi",
-      teamText: "Ushbu platforma Oxforder MCHJ tomonidan akademik mukammallik tamoyillari asosida yaratilgan."
+      teamText: "Ushbu platforma Oxforder MCHJ tomonidan akademik mukammallik tamoyillari asosida yaratilgan.",
+      developerSection: {
+        badge: "ISHLAB CHIQARUVCHI",
+        titlePrefix: "Created by",
+        companyName: "Oxforder MCHJ",
+        description: "Ushbu platforma O'zbekistondagi eng zo'r EdTech kompaniyasi — Oxforder MCHJ tomonidan yaratilgan bo'lib, ta'limdagi innovatsiyalar yetakchisi hisoblanadi.",
+        cards: [
+            {
+                title: "Best EdTech Company",
+                subtitle: "Recognized for innovation in legal education",
+                icon: "trophy"
+            },
+            {
+                title: "Academic Excellence",
+                subtitle: "Setting the standard for AI assessment",
+                icon: "academic"
+            },
+            {
+                title: "Future Ready",
+                subtitle: "Pioneering the next generation of tools",
+                icon: "rocket"
+            }
+        ]
+      }
     },
     levels: {
       [AcademicLevel.BACHELOR]: "Bakalavr",
@@ -370,7 +393,30 @@ export const TRANSLATIONS = {
       aiTitle: "AI технологияси",
       aiText: "Google Gemini 3 Pro моделлари асосида ишловчи тизим ҳар бир талабанинг эҳтиёжига мослаштирилган ноёб дарсларни яратади.",
       teamTitle: "Ишлаб чиқарувчи",
-      teamText: "Ушбу платформа Oxforder МЧЖ томонидан академик мукаммаллик тамойиллари асосида яратилган."
+      teamText: "Ушбу платформа Oxforder МЧЖ томонидан академик мукаммаллик тамойиллари асосида яратилган.",
+      developerSection: {
+        badge: "ИШЛАБ ЧИҚАРУВЧИ",
+        titlePrefix: "Created by",
+        companyName: "Oxforder МЧЖ",
+        description: "Ушбу платформа Ўзбекистондаги энг зўр EdTech компанияси — Oxforder МЧЖ томонидан яратилган бўлиб, таълимдаги инновациялар етакчиси ҳисобланади.",
+        cards: [
+            {
+                title: "Энг яхши EdTech компания",
+                subtitle: "Юридик таълимдаги инновациялар учун эътироф этилган",
+                icon: "trophy"
+            },
+            {
+                title: "Академик мукаммаллик",
+                subtitle: "AI баҳолаш стандартларини ўрнатмоқда",
+                icon: "academic"
+            },
+            {
+                title: "Келажакка тайёр",
+                subtitle: "Кейинги авлод воситаларини яратмоқда",
+                icon: "rocket"
+            }
+        ]
+      }
     },
     levels: {
       [AcademicLevel.BACHELOR]: "Бакалавр",
@@ -459,7 +505,30 @@ export const TRANSLATIONS = {
       aiTitle: "AI Technology",
       aiText: "Powered by Google Gemini 3 Pro models, the system creates unique lessons tailored to each student's needs.",
       teamTitle: "Developed By",
-      teamText: "This platform was created by Oxforder LLC based on principles of academic excellence."
+      teamText: "This platform was created by Oxforder LLC based on principles of academic excellence.",
+      developerSection: {
+        badge: "DEVELOPER",
+        titlePrefix: "Created by",
+        companyName: "Oxforder LLC",
+        description: "This platform was created by Oxforder LLC — the best EdTech company in Uzbekistan, leading innovation in education.",
+        cards: [
+            {
+                title: "Best EdTech Company",
+                subtitle: "Recognized for innovation in legal education",
+                icon: "trophy"
+            },
+            {
+                title: "Academic Excellence",
+                subtitle: "Setting the standard for AI assessment",
+                icon: "academic"
+            },
+            {
+                title: "Future Ready",
+                subtitle: "Pioneering the next generation of tools",
+                icon: "rocket"
+            }
+        ]
+      }
     },
     levels: {
       [AcademicLevel.BACHELOR]: "Bachelor",
@@ -548,7 +617,30 @@ export const TRANSLATIONS = {
       aiTitle: "Технология ИИ",
       aiText: "Система, работающая на базе моделей Google Gemini 3 Pro, создает уникальные уроки, адаптированные к потребностям каждого студента.",
       teamTitle: "Разработчик",
-      teamText: "Платформа создана компанией Oxforder LLC на основе принципов академического совершенства."
+      teamText: "Платформа создана компанией Oxforder LLC на основе принципов академического совершенства.",
+      developerSection: {
+        badge: "РАЗРАБОТЧИК",
+        titlePrefix: "Разработано",
+        companyName: "Oxforder LLC",
+        description: "Эта платформа создана Oxforder LLC — лучшей EdTech компанией в Узбекистане, лидером инноваций в образовании.",
+        cards: [
+            {
+                title: "Лучшая EdTech компания",
+                subtitle: "Признана за инновации в юридическом образовании",
+                icon: "trophy"
+            },
+            {
+                title: "Академическое совершенство",
+                subtitle: "Задает стандарты оценки ИИ",
+                icon: "academic"
+            },
+            {
+                title: "Готовность к будущему",
+                subtitle: "Создание инструментов следующего поколения",
+                icon: "rocket"
+            }
+        ]
+      }
     },
     levels: {
       [AcademicLevel.BACHELOR]: "Бакалавр",

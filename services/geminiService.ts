@@ -1,10 +1,42 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
+import OpenAI from "openai";
 import { LessonFormState, LessonResponse, Language, LessonFocus } from '../types';
 
-// In a real Next.js App, this would be a server-side route handler to protect the API key.
-// For this single-file export demo, we access it from process.env.
-const apiKey = process.env.API_KEY || ''; 
-const ai = new GoogleGenAI({ apiKey });
+// ==========================================
+// CONFIGURATION & CLIENT INITIALIZATION
+// ==========================================
+
+// Helper for delay
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// 1. Google Gemini Client (Always initialized as primary)
+const geminiApiKey = process.env.API_KEY || '';
+const googleAI = new GoogleGenAI({ apiKey: geminiApiKey });
+
+// 2. OpenAI Client (Lazy Initialized)
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OpenAI API Key is missing in environment variables");
+  return new OpenAI({ 
+    apiKey: apiKey, 
+    dangerouslyAllowBrowser: true 
+  });
+};
+
+// 3. Groq Client (Lazy Initialized)
+const getGroqClient = () => {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("Groq API Key is missing in environment variables");
+  return new OpenAI({
+    baseURL: 'https://api.groq.com/openai/v1',
+    apiKey: apiKey,
+    dangerouslyAllowBrowser: true
+  });
+};
+
+// ==========================================
+// SCHEMAS & PROMPTS
+// ==========================================
 
 // Base Schema Definitions
 const courtCaseSchema: Schema = {
@@ -42,71 +74,91 @@ const contentSectionSchema: Schema = {
   required: ['title', 'content']
 };
 
-// Helper to determine the AI's persona based on the module
 const getExpertPersona = (moduleName: string): string => {
   const m = moduleName.toLowerCase();
-  if (m.includes('jinoyat') || m.includes('criminal') || m.includes('ugolovnoe') || m.includes('уголовное')) {
-    return "a Senior Expert in Criminal Law & Criminology";
-  }
-  if (m.includes('fuqarolik') || m.includes('civil') || m.includes('grazhdanskoe') || m.includes('гражданское')) {
-    return "a Distinguished Professor of Civil Law";
-  }
-  if (m.includes('xalqaro') || m.includes('international') || m.includes('mezhdunarodnoe') || m.includes('международное')) {
-    return "a Scholar of International Law and Diplomacy";
-  }
-  if (m.includes('biznes') || m.includes('business') || m.includes('corporate') || m.includes('korporativ') || m.includes('корпоратив')) {
-    return "a Leading Corporate Law Consultant";
-  }
-  if (m.includes('konstitutsiya') || m.includes('constitutional') || m.includes('konstitutsiyaviy')) {
-    return "a Constitutional Law Scholar";
-  }
-  return "a Senior Professor";
+  if (m.includes('jinoyat') || m.includes('criminal')) return "a Senior Expert in Criminal Law & Criminology";
+  if (m.includes('fuqarolik') || m.includes('civil')) return "a Distinguished Professor of Civil Law";
+  if (m.includes('xalqaro') || m.includes('international')) return "a Scholar of International Law";
+  if (m.includes('biznes') || m.includes('business')) return "a Corporate Law Consultant";
+  return "a Senior Law Professor";
 };
 
+// ==========================================
+// PROVIDER IMPLEMENTATIONS
+// ==========================================
+
+// --- PROVIDER 1: GOOGLE GEMINI ---
+async function callGemini(prompt: string, schema: Schema, model: string): Promise<LessonResponse> {
+  console.log(`Attempting Gemini (${model})...`);
+  const response = await googleAI.models.generateContent({
+    model: model,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema,
+      temperature: 0.3,
+    }
+  });
+
+  const text = response.text;
+  if (!text) throw new Error("Gemini returned empty response");
+  return JSON.parse(text) as LessonResponse;
+}
+
+// --- PROVIDER 2 & 3: OPENAI / GROQ ---
+async function callOpenAICompatible(
+  getClient: () => OpenAI, 
+  providerName: string,
+  model: string, 
+  systemPrompt: string, 
+  userPrompt: string
+): Promise<LessonResponse> {
+  console.log(`Attempting ${providerName} (${model})...`);
+  
+  // Initialize client only when called
+  const client = getClient();
+
+  const completion = await client.chat.completions.create({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ],
+    model: model,
+    response_format: { type: "json_object" }, // Enforce JSON mode
+    temperature: 0.3,
+  });
+
+  const content = completion.choices[0].message.content;
+  if (!content) throw new Error(`${providerName} returned empty response`);
+  
+  return JSON.parse(content) as LessonResponse;
+}
+
+// ==========================================
+// MAIN GENERATION LOGIC
+// ==========================================
+
 export const generateLesson = async (form: LessonFormState, language: Language): Promise<LessonResponse> => {
-  const modelId = 'gemini-3-pro-preview'; // High capability model for structured output
-
-  // 1. Dynamic Persona
   const persona = getExpertPersona(form.module);
-
-  // 2. Dynamic Focus Instruction
+  
+  // Construct Focus Instructions
   let focusInstruction = "";
   switch(form.focus) {
-    case LessonFocus.THEORETICAL:
-      focusInstruction = "Focus strictly on legal dogmatics, historical evolution, and the philosophical basis of the law. Minimize practical scenarios in favor of deep theoretical analysis.";
-      break;
-    case LessonFocus.PRACTICAL:
-      focusInstruction = "Focus strictly on application. Explain how to draft documents, procedural steps in court, and common pitfalls for practicing lawyers. Use language suited for a future attorney.";
-      break;
-    case LessonFocus.CASE_BASED:
-      focusInstruction = "Center the entire lesson around specific court decisions (precedents) and case studies. Use the 'Case Method' to explain principles.";
-      break;
-    case LessonFocus.LEGISLATIVE:
-      focusInstruction = "Focus on statutory interpretation. Conduct a line-by-line exegesis of specific articles from the relevant Codes (e.g., Civil Code or Criminal Code of Uzbekistan).";
-      break;
+    case LessonFocus.THEORETICAL: focusInstruction = "Focus on legal dogmatics and philosophy."; break;
+    case LessonFocus.PRACTICAL: focusInstruction = "Focus on drafting, procedural steps, and application."; break;
+    case LessonFocus.CASE_BASED: focusInstruction = "Center the lesson around specific court precedents."; break;
+    case LessonFocus.LEGISLATIVE: focusInstruction = "Focus on statutory interpretation of Codes."; break;
   }
 
-  // 3. Build Dynamic Prompt Requirements
+  // Construct Requirements
   let structureReqs = "";
-  if (form.structure.comparativeAnalysis) structureReqs += "- Include a 'comparativeAnalysis' section comparing this topic with other jurisdictions (e.g. Roman Law, UK, USA, Germany).\n";
-  if (form.structure.practicalExercises) structureReqs += "- Include 'practicalExercises' with hypothetical legal scenarios and answers.\n";
-  if (form.structure.glossary) structureReqs += "- Include a 'glossary' of key legal terms.\n";
-  if (form.structure.bibliography) structureReqs += "- Include a 'bibliography' of standard textbooks or codes.\n";
+  if (form.structure.comparativeAnalysis) structureReqs += "- Include 'comparativeAnalysis' section.\n";
+  if (form.structure.practicalExercises) structureReqs += "- Include 'practicalExercises'.\n";
+  if (form.structure.glossary) structureReqs += "- Include 'glossary'.\n";
+  if (form.structure.bibliography) structureReqs += "- Include 'bibliography'.\n";
 
-  // 4. Build Dynamic Schema Validation
-  // We strictly require fields if the user asked for them.
-  const requiredFields = [
-    'title', 
-    'module', 
-    'objectives', 
-    'concepts', 
-    'definitionAndStructure', 
-    'historicalDevelopment', 
-    'commonMistakes', 
-    'discussionQuestions', 
-    'conclusion'
-  ];
-
+  // Build Schema
+  const requiredFields = ['title', 'module', 'objectives', 'concepts', 'definitionAndStructure', 'historicalDevelopment', 'commonMistakes', 'discussionQuestions', 'conclusion'];
   if (form.structure.comparativeAnalysis) requiredFields.push('comparativeAnalysis');
   if (form.structure.practicalExercises) requiredFields.push('practicalExercises');
   if (form.structure.glossary) requiredFields.push('glossary');
@@ -124,28 +176,8 @@ export const generateLesson = async (form: LessonFormState, language: Language):
       definitionAndStructure: contentSectionSchema,
       historicalDevelopment: contentSectionSchema,
       comparativeAnalysis: contentSectionSchema,
-      practicalExercises: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            question: { type: Type.STRING },
-            answer: { type: Type.STRING }
-          },
-          required: ['question', 'answer']
-        }
-      },
-      glossary: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            term: { type: Type.STRING },
-            definition: { type: Type.STRING }
-          },
-          required: ['term', 'definition']
-        }
-      },
+      practicalExercises: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { question: { type: Type.STRING }, answer: { type: Type.STRING } }, required: ['question', 'answer'] } },
+      glossary: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { term: { type: Type.STRING }, definition: { type: Type.STRING } }, required: ['term', 'definition'] } },
       bibliography: { type: Type.ARRAY, items: { type: Type.STRING } },
       courtCases: { type: Type.ARRAY, items: courtCaseSchema },
       legalDoctrines: { type: Type.ARRAY, items: doctrineSchema },
@@ -156,50 +188,70 @@ export const generateLesson = async (form: LessonFormState, language: Language):
     required: requiredFields
   };
 
-  const prompt = `
+  // Base Prompt
+  const corePrompt = `
     Role: You are ${persona} at TSUL (Tashkent State University of Law).
     Task: Generate a high-fidelity, university-grade academic lesson.
+    Language: ${language} (STRICTLY).
+    Module: ${form.module}
+    Topic: ${form.topic}
+    Level: ${form.level}
     
-    Context:
-    - Language: ${language} (STRICTLY OUTPUT IN THIS LANGUAGE)
-    - Module: ${form.module}
-    - Topic: ${form.topic}
-    - Level: ${form.level}
-    - Depth: ${form.depth}
-    - Audience Simplicity: ${form.simplicity} (Adjust vocabulary and tone accordingly)
+    Strategy: ${focusInstruction}
     
-    Teaching Strategy:
-    ${focusInstruction}
-    
-    Structure Requirements:
-    - Include strictly valid JSON matching the schema.
-    - No markdown formatting outside the JSON string.
-    - Ensure 'courtCases' are real, historically accurate cases relevant to the topic. If no specific cases exist, provide hypothetical examples labeled as such, but prefer real precedents.
-    - Ensure 'legalDoctrines' are accurate legal theories.
+    Requirements:
+    - Output strictly valid JSON.
+    - Ensure court cases are real/historically accurate.
     ${structureReqs}
-    - Content should be educational, structured, and use academic legal terminology appropriate for the target language.
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: lessonSchema,
-        temperature: 0.3, // Low temperature for academic accuracy
-      }
-    });
+  // System Prompt for OpenAI/Groq (Needs Schema as text)
+  const openAISystemPrompt = `
+    You are a JSON-only API. You must return a JSON object matching this schema exactly:
+    ${JSON.stringify(lessonSchema, null, 2)}
+  `;
 
-    const text = response.text;
-    if (!text) throw new Error("No content generated");
-    
-    return JSON.parse(text) as LessonResponse;
-  } catch (error) {
-    console.error("Gemini Generation Error:", error);
-    throw error;
+  // --- FALLBACK EXECUTION FLOW ---
+
+  // 1. Try Gemini Pro
+  try {
+    return await callGemini(corePrompt, lessonSchema, 'gemini-3-pro-preview');
+  } catch (err: any) {
+    console.warn("Gemini Pro failed:", err.message);
+
+    // 1b. Try Gemini Flash (Fast Fallback)
+    try {
+      if (err.message.includes('429') || err.message.includes('quota')) {
+        console.warn("Quota hit. Trying Gemini Flash...");
+        return await callGemini(corePrompt, lessonSchema, 'gemini-3-flash-preview');
+      }
+      throw err; // If not quota, throw to next provider
+    } catch (geminiErr: any) {
+      console.warn("All Gemini models failed. Switching to OpenAI...");
+      
+      // 2. Try OpenAI (GPT-4o)
+      try {
+        return await callOpenAICompatible(getOpenAIClient, "OpenAI", "gpt-4o", openAISystemPrompt, corePrompt);
+      } catch (openaiErr: any) {
+        console.warn("OpenAI failed:", openaiErr.message);
+        console.warn("Switching to Groq...");
+
+        // 3. Try Groq (Llama 3)
+        try {
+          // Llama 3.3 70b is excellent at JSON and complex reasoning
+          return await callOpenAICompatible(getGroqClient, "Groq", "llama-3.3-70b-versatile", openAISystemPrompt, corePrompt);
+        } catch (groqErr: any) {
+          console.error("CRITICAL: All AI providers failed.");
+          throw new Error("All AI services are currently unavailable. Please try again later.");
+        }
+      }
+    }
   }
 };
+
+// ==========================================
+// CHAT FUNCTIONALITY (ALSO WITH FALLBACK)
+// ==========================================
 
 export const chatWithAssistant = async (
   history: { role: 'user' | 'model'; content: string }[],
@@ -207,41 +259,56 @@ export const chatWithAssistant = async (
   lessonContext: LessonResponse,
   language: Language
 ) => {
-  const modelId = 'gemini-3-flash-preview'; // Faster model for chat
-  
   const persona = getExpertPersona(lessonContext.module);
-
-  const systemInstruction = `
-    You are ${persona} at TSUL. 
-    You are currently teaching a lesson titled "${lessonContext.title}" from the module "${lessonContext.module}".
-    
-    Context of the lesson:
-    ${JSON.stringify(lessonContext.concepts)}
-    ${lessonContext.definitionAndStructure.content}
-    
-    Instructions:
-    - Answer the student's question based strictly on the provided lesson context and general legal knowledge relevant to the topic.
-    - Be helpful, encouraging, and academic.
-    - Respond in the language: ${language}.
-    - Keep answers concise (max 3 sentences unless asked to elaborate).
+  const systemContext = `
+    You are ${persona}. Teaching: "${lessonContext.title}".
+    Context: ${JSON.stringify(lessonContext.concepts)}.
+    Language: ${language}.
+    Keep answers concise.
   `;
 
+  // 1. Try Gemini Flash (Best for Chat)
   try {
-    const chat = ai.chats.create({
-        model: modelId,
-        config: {
-            systemInstruction
-        },
-        history: history.map(h => ({
-            role: h.role,
-            parts: [{ text: h.content }]
-        }))
+    const chat = googleAI.chats.create({
+      model: 'gemini-3-flash-preview',
+      config: { systemInstruction: systemContext },
+      history: history.map(h => ({ role: h.role, parts: [{ text: h.content }] }))
     });
-
     const result = await chat.sendMessage({ message: currentMessage });
-    return result.text;
-  } catch (error) {
-    console.error("Chat Error:", error);
-    return "Error communicating with AI Assistant.";
+    return result.text || "";
+  } catch (err) {
+    console.warn("Gemini Chat failed, switching to Groq (Fastest fallback)...");
+
+    // 2. Fallback to Groq (Llama 3 is very fast for chat)
+    try {
+        const groq = getGroqClient();
+        const completion = await groq.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                { role: "system", content: systemContext },
+                ...history.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.content } as any)),
+                { role: "user", content: currentMessage }
+            ]
+        });
+        return completion.choices[0].message.content || "";
+    } catch (groqErr) {
+        console.warn("Groq Chat failed, switching to OpenAI...");
+        
+        // 3. Final Fallback to OpenAI (GPT-4o-mini for cost/speed)
+        try {
+            const openai = getOpenAIClient();
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o-mini", 
+                messages: [
+                    { role: "system", content: systemContext },
+                    ...history.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.content } as any)),
+                    { role: "user", content: currentMessage }
+                ]
+            });
+            return completion.choices[0].message.content || "";
+        } catch (finalErr) {
+            return "Error: Unable to connect to any AI assistant.";
+        }
+    }
   }
 };

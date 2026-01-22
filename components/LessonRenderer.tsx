@@ -20,12 +20,18 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
     // Allow React to apply the pdf-exporting class before capturing
     setTimeout(() => {
         const element = document.getElementById('lesson-content-area');
+        
         const opt = {
-          margin: [10, 10, 10, 10], // top, left, bottom, right in mm
+          margin: [10, 10, 10, 10], // Standard 10mm margins
           filename: `${data.title.replace(/[^a-z0-9]/gi, '_').substring(0, 30)}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          html2canvas: { 
+            scale: 2, // High resolution
+            useCORS: true, 
+            scrollY: 0,
+            windowWidth: 1280 // Force Desktop width to capture grid correctly
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, // LANDSCAPE MODE
           pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
         
@@ -35,13 +41,16 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
             // @ts-ignore
             window.html2pdf().set(opt).from(element).save().then(() => {
                 setIsDownloading(false);
+            }).catch((err: any) => {
+                console.error("PDF Export Error:", err);
+                setIsDownloading(false);
             });
         } else {
             // Fallback
             window.print();
             setIsDownloading(false);
         }
-    }, 100);
+    }, 200);
   };
 
   return (

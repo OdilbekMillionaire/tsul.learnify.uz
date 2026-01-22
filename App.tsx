@@ -42,9 +42,30 @@ const App: React.FC = () => {
       // Initialize chat with greeting in current language
       setChatHistory([{ role: 'model', content: TRANSLATIONS[currentLang].aiGreeting }]);
       setCurrentView('lesson');
-    } catch (err) {
-      console.error(err);
-      setError("Failed to generate lesson. Please check your API Key, internet connection, and try again.");
+    } catch (err: any) {
+      console.error("Generation Error:", err);
+      
+      let errorMessage = "Failed to generate lesson. Please check your API Key, internet connection, and try again.";
+      
+      // Robust error checking for quota limits
+      const errString = err?.toString() || "";
+      const errMessage = err?.message || "";
+      
+      if (
+        errString.includes("429") || 
+        errMessage.includes("429") || 
+        errString.toLowerCase().includes("quota") || 
+        errMessage.toLowerCase().includes("quota") ||
+        errString.toLowerCase().includes("exhausted")
+      ) {
+        errorMessage = "⚠️ API Quota Exceeded. The system is currently busy. Please wait a minute and try again.";
+      } else if (errString.includes("503") || errMessage.includes("503")) {
+        errorMessage = "⚠️ AI Service Overloaded. Please try again in a few moments.";
+      } else if (errString.includes("API key") || errMessage.includes("API key")) {
+         errorMessage = "⚠️ Invalid API Key. Please check your configuration.";
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
