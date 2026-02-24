@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import OpenAI from "openai";
-import { LessonFormState, LessonResponse, Language, LessonFocus } from '../types';
+import { LessonFormState, LessonResponse, Language, LessonFocus, EnhancedLessonResponse, SourceContent, RAGContext, CredibilityMetrics, LessonSourceAttributions } from '../types';
+import { fetchAcademicSources, calculateCredibilityScore, getSourceBreakdown } from './academicSourceService';
 import { searchForTopic, createBibliographyFromSearch } from './searchService';
 
 // ==========================================
@@ -142,20 +143,73 @@ async function callOpenAICompatible(
 export const generateLesson = async (form: LessonFormState, language: Language): Promise<LessonResponse> => {
   const persona = getExpertPersona(form.module);
 
-  // Fetch real-time information from web search (non-blocking)
+  // RAG: Fetch academic sources for context enrichment (non-blocking)
+  let ragContext: RAGContext = {
+    sources: [],
+    embeddings: [],
+    credibilityScore: 0,
+    officialSourcePercentage: 0
+  };
   let searchResults: any[] = [];
   let searchBibliography: string[] = [];
+
   try {
-    // Search for current information about the topic
-    const searchQueries = [form.topic, `${form.module} ${form.topic}`, `${form.topic} latest developments`];
-    const allResults = await Promise.all(
-      searchQueries.map(q => searchForTopic(q, 3).catch(() => []))
+    // Strategy 1: PRIORITY - Fetch academic sources from official/trusted platforms
+    // This is the new RAG approach (Retrieval Augmented Generation)
+    const academicSources = await fetchAcademicSources(
+      form.topic,
+      'uzbekistan',
+      5 // max 5 sources
     );
-    searchResults = allResults.flat().slice(0, 5);
-    searchBibliography = createBibliographyFromSearch(searchResults);
-    console.log(`Found ${searchResults.length} search results for topic enrichment`);
+
+    if (academicSources.length > 0) {
+      ragContext.sources = academicSources;
+      ragContext.credibilityScore = calculateCredibilityScore(academicSources);
+      const breakdown = getSourceBreakdown(academicSources);
+      ragContext.officialSourcePercentage = Math.round(
+        ((breakdown.official + breakdown.academic) / academicSources.length) * 100
+      );
+
+      // Convert to searchResults format for backward compatibility
+      searchResults = academicSources.map(s => ({
+        title: s.title,
+        description: s.excerpt,
+        url: s.url,
+        source: s.sourceType,
+        badge: s.credibilityBadge
+      }));
+
+      searchBibliography = academicSources.map(s => `${s.title} (${s.sourceType.toUpperCase()}): ${s.url}`);
+
+      console.log(`[RAG] Found ${searchResults.length} academic sources. Credibility score: ${ragContext.credibilityScore}%`);
+    } else {
+      // Strategy 2: FALLBACK - Use general web search if academic sources unavailable
+      console.log('[RAG] No academic sources found, falling back to general web search...');
+      const searchQueries = [form.topic, `${form.module} ${form.topic}`];
+      const allResults = await Promise.all(
+        searchQueries.map(q => searchForTopic(q, 2).catch(() => []))
+      );
+      searchResults = allResults.flat().slice(0, 3);
+      searchBibliography = createBibliographyFromSearch(searchResults);
+
+      // Convert to source content for consistency
+      if (searchResults.length > 0) {
+        ragContext.sources = searchResults.map((r, i) => ({
+          sourceId: `web_${i}_${Date.now()}`,
+          sourceType: 'educational' as const,
+          title: r.title,
+          url: r.url,
+          relevanceScore: 50,
+          excerpt: r.description || '',
+          credibilityBadge: 'general' as const,
+          fetchedAt: new Date()
+        }));
+        ragContext.credibilityScore = 40; // Lower score for general sources
+        ragContext.officialSourcePercentage = 0;
+      }
+    }
   } catch (searchError) {
-    console.warn('Web search enrichment skipped (non-critical):', searchError);
+    console.warn('[RAG] Source enrichment failed (non-critical):', searchError);
   }
 
   // Construct Focus Instructions
@@ -205,25 +259,31 @@ export const generateLesson = async (form: LessonFormState, language: Language):
     required: requiredFields
   };
 
-  // Base Prompt with web search context
-  const webSearchContext = searchResults.length > 0
+  // RAG Context: Embed source content in prompt for better accuracy
+  const ragPromptContext = ragContext.sources.length > 0
     ? `
-    Recent Information (from web search):
-    ${searchResults.map(r => `- ${r.title}: ${r.description}`).join('\n')}
+    OFFICIAL ACADEMIC SOURCES FOR CONTEXT (Credibility Score: ${ragContext.credibilityScore}%):
+    ${ragContext.sources.map((s, i) => `
+    [Source ${i + 1}] ${s.title}
+    Type: ${s.sourceType.toUpperCase()} | Badge: ${s.credibilityBadge}
+    URL: ${s.url}
+    Content Excerpt: ${s.excerpt}
+    `).join('\n')}
 
-    Note: Consider current developments and recent information while generating the lesson.
+    IMPORTANT: You MUST cite these sources in your lesson content using the format [Source: SourceTitle].
+    Ensure academic credibility by referencing official sources whenever possible.
     `
     : '';
 
   const corePrompt = `
     Role: You are ${persona} at TSUL (Tashkent State University of Law).
-    Task: Generate a high-fidelity, university-grade academic lesson.
+    Task: Generate a high-fidelity, university-grade academic lesson with official source citations.
     Language: ${language} (STRICTLY).
     Module: ${form.module}
     Topic: ${form.topic}
     Level: ${form.level}
 
-    ${webSearchContext}
+    ${ragPromptContext}
 
     Strategy: ${focusInstruction}
 
@@ -232,6 +292,8 @@ export const generateLesson = async (form: LessonFormState, language: Language):
     - Ensure court cases are real/historically accurate.
     - Use **bold** for emphasis and *italics* for technical terms (support markdown formatting).
     - Include numbered lists and bullet points using markdown syntax (-, 1. 2. etc.)
+    - CITE SOURCES: When using information from the provided sources, cite them as [Source: SourceTitle]
+    - If you cannot cite a claim from provided sources, be transparent about it
     ${structureReqs}
   `;
 
@@ -259,7 +321,23 @@ export const generateLesson = async (form: LessonFormState, language: Language):
       lesson.sourceLinks = searchResults;
     }
 
-    return lesson;
+    // Enhance response with RAG metadata
+    const enhancedLesson: EnhancedLessonResponse = {
+      ...lesson,
+      ragContext,
+      credibilityMetrics: {
+        officialSources: getSourceBreakdown(ragContext.sources).official,
+        academicSources: getSourceBreakdown(ragContext.sources).academic,
+        trustedSources: getSourceBreakdown(ragContext.sources).trusted,
+        generalSources: getSourceBreakdown(ragContext.sources).general,
+        credibilityScore: ragContext.credibilityScore,
+        badges: ragContext.sources
+          .filter(s => s.credibilityBadge === 'official')
+          .map(s => `official_${s.sourceType}`)
+      }
+    };
+
+    return enhancedLesson;
   } catch (err: any) {
     console.warn("Gemini Pro failed:", err.message);
 
@@ -289,7 +367,23 @@ export const generateLesson = async (form: LessonFormState, language: Language):
           lesson.sourceLinks = searchResults;
         }
 
-        return lesson;
+        // Enhance response with RAG metadata
+        const enhancedLesson: EnhancedLessonResponse = {
+          ...lesson,
+          ragContext,
+          credibilityMetrics: {
+            officialSources: getSourceBreakdown(ragContext.sources).official,
+            academicSources: getSourceBreakdown(ragContext.sources).academic,
+            trustedSources: getSourceBreakdown(ragContext.sources).trusted,
+            generalSources: getSourceBreakdown(ragContext.sources).general,
+            credibilityScore: ragContext.credibilityScore,
+            badges: ragContext.sources
+              .filter(s => s.credibilityBadge === 'official')
+              .map(s => `official_${s.sourceType}`)
+          }
+        };
+
+        return enhancedLesson;
       } catch (openaiErr: any) {
         console.warn("OpenAI failed:", openaiErr.message);
         console.warn("Switching to Groq...");
@@ -311,7 +405,23 @@ export const generateLesson = async (form: LessonFormState, language: Language):
             lesson.sourceLinks = searchResults;
           }
 
-          return lesson;
+          // Enhance response with RAG metadata
+          const enhancedLesson: EnhancedLessonResponse = {
+            ...lesson,
+            ragContext,
+            credibilityMetrics: {
+              officialSources: getSourceBreakdown(ragContext.sources).official,
+              academicSources: getSourceBreakdown(ragContext.sources).academic,
+              trustedSources: getSourceBreakdown(ragContext.sources).trusted,
+              generalSources: getSourceBreakdown(ragContext.sources).general,
+              credibilityScore: ragContext.credibilityScore,
+              badges: ragContext.sources
+                .filter(s => s.credibilityBadge === 'official')
+                .map(s => `official_${s.sourceType}`)
+            }
+          };
+
+          return enhancedLesson;
         } catch (groqErr: any) {
           console.error("CRITICAL: All AI providers failed.");
           throw new Error("All AI services are currently unavailable. Please try again later.");

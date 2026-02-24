@@ -37,26 +37,86 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
     }
   });
 
-  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+  const [loadingState, setLoadingState] = useState<{stage: 'search' | 'generate' | 'refine', progress: number, message: string, elapsed: number}>({
+    stage: 'search',
+    progress: 0,
+    message: 'Searching academic sources...',
+    elapsed: 0
+  });
   const [costEstimate, setCostEstimate] = useState(() => estimateCost(form));
 
-  const loadingMessages = [
-    "Analyzing academic databases...",
-    "Structuring legal arguments...",
-    "Retrieving case law precedents...",
-    "Synthesizing theoretical concepts...",
-    "Verifying academic compliance...",
-    "Finalizing lesson format..."
-  ];
+  // Stage messages - these progress naturally, not cycling
+  const stageMessages: Record<'search' | 'generate' | 'refine', string[]> = {
+    search: [
+      "Searching Lex.uz for official laws...",
+      "Querying international legal databases...",
+      "Gathering academic sources..."
+    ],
+    generate: [
+      "Preparing academic context...",
+      "Generating lesson structure...",
+      "Writing comprehensive content...",
+      "Adding case examples...",
+      "Building definitions..."
+    ],
+    refine: [
+      "Attributing sources to sections...",
+      "Generating citations...",
+      "Calculating credibility score...",
+      "Finalizing lesson..."
+    ]
+  };
 
   useEffect(() => {
     if (isLoading) {
+      let startTime = Date.now();
+      let messageIndex = 0;
+
+      // Simulate realistic progress: 0-30 (search), 30-70 (generate), 70-100 (refine)
       const interval = setInterval(() => {
-        setLoadingMsgIndex(prev => (prev + 1) % loadingMessages.length);
-      }, 2000);
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        let newProgress = 0;
+        let stage: 'search' | 'generate' | 'refine' = 'search';
+        let message = '';
+
+        if (elapsed < 8) {
+          // SEARCH phase: 0-30% (8 seconds)
+          stage = 'search';
+          newProgress = Math.min(30, Math.floor((elapsed / 8) * 30));
+          messageIndex = Math.floor((elapsed / 8) * stageMessages.search.length);
+          message = stageMessages.search[Math.min(messageIndex, stageMessages.search.length - 1)];
+        } else if (elapsed < 33) {
+          // GENERATE phase: 30-70% (25 seconds)
+          stage = 'generate';
+          const stageElapsed = elapsed - 8;
+          newProgress = 30 + Math.min(40, Math.floor((stageElapsed / 25) * 40));
+          messageIndex = Math.floor((stageElapsed / 25) * stageMessages.generate.length);
+          message = stageMessages.generate[Math.min(messageIndex, stageMessages.generate.length - 1)];
+        } else {
+          // REFINE phase: 70-100% (10 seconds)
+          stage = 'refine';
+          const stageElapsed = elapsed - 33;
+          newProgress = 70 + Math.min(30, Math.floor((stageElapsed / 10) * 30));
+          messageIndex = Math.floor((stageElapsed / 10) * stageMessages.refine.length);
+          message = stageMessages.refine[Math.min(messageIndex, stageMessages.refine.length - 1)];
+        }
+
+        setLoadingState({
+          stage,
+          progress: newProgress,
+          message,
+          elapsed
+        });
+      }, 300);
+
       return () => clearInterval(interval);
     } else {
-      setLoadingMsgIndex(0);
+      setLoadingState({
+        stage: 'search',
+        progress: 0,
+        message: 'Searching academic sources...',
+        elapsed: 0
+      });
     }
   }, [isLoading]);
 
@@ -77,6 +137,8 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
   };
 
   if (isLoading) {
+    const estimatedRemaining = Math.max(0, 43 - loadingState.elapsed);
+
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 animate-fade-in-up text-center">
         <div className="mb-12">
@@ -87,31 +149,73 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
               </svg>
            </div>
            <h2 className="font-serif text-3xl font-bold text-navy-900 mb-2">{t.generating}</h2>
-           <p className="text-slate-500 max-w-md mx-auto animate-pulse font-medium min-h-[1.5rem] transition-opacity duration-300">
-             {loadingMessages[loadingMsgIndex]}
+           <p className="text-slate-500 max-w-md mx-auto font-medium min-h-[1.5rem] transition-all duration-300">
+             {loadingState.message}
            </p>
         </div>
-        
-        <div className="max-w-md mx-auto bg-white rounded-lg p-6 shadow-sm border border-slate-100 space-y-4">
+
+        <div className="max-w-md mx-auto bg-white rounded-lg p-6 shadow-sm border border-slate-100 space-y-6">
              {/* Progress Bar */}
-             <div className="space-y-2">
+             <div className="space-y-3">
                 <div className="flex justify-between items-center">
                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Progress</span>
-                   <span className="text-sm font-bold text-gold-600">{Math.ceil((loadingMsgIndex / loadingMessages.length) * 100)}%</span>
+                   <span className="text-sm font-bold text-gold-600">{loadingState.progress}%</span>
                 </div>
-                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                    <div
-                     className="h-full bg-gradient-to-r from-gold-500 to-gold-600 transition-all duration-300 ease-out rounded-full shadow-sm"
-                     style={{width: `${Math.ceil((loadingMsgIndex / loadingMessages.length) * 100)}%`}}
+                     className="h-full bg-gradient-to-r from-gold-500 to-gold-600 transition-all duration-500 ease-out rounded-full shadow-sm"
+                     style={{width: `${loadingState.progress}%`}}
                    ></div>
                 </div>
              </div>
 
-             {/* Stage Indicators */}
-             <div className="flex justify-between text-xs font-semibold uppercase tracking-wide">
-                <span className={loadingMsgIndex >= 0 ? 'text-gold-600' : 'text-slate-300'}>Search</span>
-                <span className={loadingMsgIndex >= 2 ? 'text-gold-600' : 'text-slate-300'}>Generate</span>
-                <span className={loadingMsgIndex >= 4 ? 'text-gold-600' : 'text-slate-300'}>Refine</span>
+             {/* Stage Indicators with Progress */}
+             <div className="space-y-3">
+               <div className="flex justify-between items-center gap-2">
+                 {/* SEARCH Stage */}
+                 <div className="flex-1">
+                   <div className={`text-xs font-bold uppercase tracking-wide mb-1.5 transition-colors ${loadingState.stage === 'search' ? 'text-gold-600' : loadingState.progress >= 30 ? 'text-gold-600' : 'text-slate-400'}`}>
+                     Search
+                   </div>
+                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                     <div
+                       className="h-full bg-gold-500 transition-all duration-500"
+                       style={{width: `${Math.min(100, Math.max(0, (loadingState.progress / 30) * 100))}%`}}
+                     ></div>
+                   </div>
+                 </div>
+
+                 {/* GENERATE Stage */}
+                 <div className="flex-1">
+                   <div className={`text-xs font-bold uppercase tracking-wide mb-1.5 transition-colors ${loadingState.stage === 'generate' ? 'text-gold-600' : loadingState.progress >= 70 ? 'text-gold-600' : 'text-slate-400'}`}>
+                     Generate
+                   </div>
+                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                     <div
+                       className="h-full bg-gold-500 transition-all duration-500"
+                       style={{width: `${Math.min(100, Math.max(0, ((loadingState.progress - 30) / 40) * 100))}%`}}
+                     ></div>
+                   </div>
+                 </div>
+
+                 {/* REFINE Stage */}
+                 <div className="flex-1">
+                   <div className={`text-xs font-bold uppercase tracking-wide mb-1.5 transition-colors ${loadingState.stage === 'refine' ? 'text-gold-600' : loadingState.progress >= 100 ? 'text-gold-600' : 'text-slate-400'}`}>
+                     Refine
+                   </div>
+                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                     <div
+                       className="h-full bg-gold-500 transition-all duration-500"
+                       style={{width: `${Math.min(100, Math.max(0, ((loadingState.progress - 70) / 30) * 100))}%`}}
+                     ></div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+             {/* Time Display */}
+             <div className="text-xs text-slate-500 font-medium">
+               ⏱️ {Math.floor(loadingState.elapsed / 60)}m {loadingState.elapsed % 60}s elapsed · ~{Math.floor(estimatedRemaining / 60)}m {estimatedRemaining % 60}s remaining
              </div>
         </div>
       </div>

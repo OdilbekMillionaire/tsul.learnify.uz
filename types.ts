@@ -108,6 +108,61 @@ export interface ChatMessage {
   content: string;
 }
 
+// ===== RAG (RETRIEVAL AUGMENTED GENERATION) TYPES =====
+
+export type CredibilityBadge = 'official' | 'academic' | 'trusted' | 'general';
+export type SourceType = 'lex_uz' | 'international' | 'government' | 'academic' | 'educational';
+
+export interface SourceContent {
+  sourceId: string;
+  sourceType: SourceType;
+  title: string;
+  url: string;
+  relevanceScore: number; // 0-100
+  excerpt: string; // First 500 chars of actual content
+  credibilityBadge: CredibilityBadge;
+  fetchedAt: Date;
+}
+
+export interface LessonSourceAttributions {
+  [sectionId: string]: {
+    primarySource: SourceContent;
+    supportingSources: SourceContent[];
+    citationText: string; // "[Source: Lex.uz]" format
+  };
+}
+
+export interface RAGContext {
+  sources: SourceContent[];
+  embeddings: string[]; // For future semantic search
+  credibilityScore: number; // 0-100
+  officialSourcePercentage: number; // % of lesson from official sources
+}
+
+export interface CredibilityMetrics {
+  officialSources: number;
+  academicSources: number;
+  trustedSources: number;
+  generalSources: number;
+  credibilityScore: number; // weighted 0-100
+  badges: string[]; // e.g., ['official_lex', 'academic_endorsed']
+}
+
+export interface ProgressEvent {
+  stage: 'search' | 'generate' | 'refine';
+  progressPercent: number; // 0, 30, 50, 70, 90, 100
+  statusMessage: string;
+  elapsedSeconds: number;
+  estimatedRemainingSeconds?: number;
+}
+
+// Extended lesson response with RAG metadata
+export interface EnhancedLessonResponse extends LessonResponse {
+  ragContext?: RAGContext;
+  sourceAttributions?: LessonSourceAttributions;
+  credibilityMetrics?: CredibilityMetrics;
+}
+
 // ===== NEW TYPES FOR FEATURES =====
 
 // Dark Mode / Theme

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { LessonResponse, Language, ChatMessage } from '../types';
+import { LessonResponse, Language, ChatMessage, EnhancedLessonResponse } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ChatWidget } from './ChatWidget';
+import { CredibilityMeter } from './CredibilityMeter';
+import { SourceBadge } from './SourceBadge';
+import { SourcePreviewModal } from './SourcePreviewModal';
 import ReactMarkdown from 'react-markdown';
 
 interface LessonRendererProps {
@@ -132,6 +135,10 @@ const SectionHeader = ({ icon, title, sectionId, content }: { icon: string; titl
 
 export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLang, onBack, chatHistory, onChatHistoryChange }) => {
   const t = TRANSLATIONS[currentLang];
+  const [selectedSource, setSelectedSource] = useState<any>(null);
+
+  // Cast to EnhancedLessonResponse to access RAG data
+  const enhancedData = data as EnhancedLessonResponse;
 
   const handleDownload = () => {
     window.print();
@@ -216,6 +223,13 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                 </div>
              </div>
           </div>
+
+          {/* NEW FEATURE: Credibility Meter */}
+          {enhancedData.credibilityMetrics && (
+            <div className="no-print">
+              <CredibilityMeter metrics={enhancedData.credibilityMetrics} />
+            </div>
+          )}
         </div>
 
         {/* MAIN CONTENT (Right on desktop) */}
@@ -406,13 +420,24 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
                         {/* Interactive version (screen) */}
                         <div className="sources-interactive space-y-3">
-                            {data.sourceLinks.map((source, i) => (
-                                <a
+                            {data.sourceLinks.map((source, i) => {
+                              // Try to create a SourceContent object from the SearchSource
+                              const sourceContent: any = {
+                                sourceId: `source_${i}`,
+                                sourceType: (source as any).source || 'educational',
+                                title: source.title,
+                                url: source.url,
+                                relevanceScore: 75,
+                                excerpt: (source as any).description || 'Source information from lesson generation.',
+                                credibilityBadge: (source as any).badge || 'general',
+                                fetchedAt: new Date()
+                              };
+
+                              return (
+                                <button
                                     key={i}
-                                    href={source.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all group"
+                                    onClick={() => setSelectedSource(sourceContent)}
+                                    className="block w-full p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all group text-left cursor-pointer no-print"
                                 >
                                     <div className="flex items-start gap-3">
                                         <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-blue-700 transition-colors">
@@ -435,8 +460,9 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                         </svg>
                                     </div>
-                                </a>
-                            ))}
+                                </button>
+                              );
+                            })}
                         </div>
 
                         {/* Print-friendly version (PDF) */}
@@ -498,6 +524,9 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
         </div>
       </div>
+
+      {/* Source Preview Modal */}
+      <SourcePreviewModal source={selectedSource} onClose={() => setSelectedSource(null)} />
     </div>
   );
 };
