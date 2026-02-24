@@ -48,7 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangCha
   return (
     <div className="min-h-screen flex flex-col font-sans">
       {/* Glassmorphism Header */}
-      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-all duration-300">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo Area */}
           <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick}>
@@ -118,7 +118,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangCha
           <div className="relative" ref={langMenuRef}>
             <button
               onClick={toggleLangMenu}
-              className={`flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${isLangMenuOpen ? 'bg-slate-50 dark:bg-slate-800 text-navy-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'}`}
+              className={`flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors ${isLangMenuOpen ? 'bg-slate-50 text-navy-900' : 'text-slate-600'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-slate-400">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S13.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m-15.686 0A8.959 8.959 0 013 12c0-.778.099-1.533.284-2.253m0 0A11.953 11.953 0 0112 10.5c2.998 0 5.74 1.1 7.843 2.918" />
@@ -130,12 +130,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangCha
             </button>
             
             {isLangMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50 animate-fade-in-down origin-top-right ring-1 ring-black/5">
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-fade-in-down origin-top-right ring-1 ring-black/5">
                 {Object.values(Language).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => selectLanguage(lang)}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-between ${currentLang === lang ? 'text-gold-600 font-semibold bg-slate-50 dark:bg-slate-700 dark:text-gold-400' : 'text-slate-600 dark:text-slate-400'}`}
+                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors flex items-center justify-between ${currentLang === lang ? 'text-gold-600 font-semibold bg-slate-50' : 'text-slate-600'}`}
                   >
                     {lang === Language.UZ_LATIN ? "O'zbekcha" : lang === Language.UZ_CYRILLIC ? "Ўзбекча" : lang === Language.ENGLISH ? "English" : "Русский"}
                     {currentLang === lang && <span className="w-1.5 h-1.5 rounded-full bg-gold-600"></span>}

@@ -8,6 +8,9 @@ export interface SearchResult {
   source: string;
 }
 
+// Re-export for type compatibility
+export type SearchSource = SearchResult;
+
 // Try multiple search APIs with fallback strategy
 export const searchForTopic = async (query: string, maxResults: number = 5): Promise<SearchResult[]> => {
   try {

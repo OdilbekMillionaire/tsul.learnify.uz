@@ -132,74 +132,216 @@
         }
       }
 
-      /* PDF Export Specific Styles (used by html2pdf) */
+      /* PROFESSIONAL PDF EXPORT STYLING - Based on Design Best Practices */
       .pdf-exporting {
-        /* Set explicit width for A4 Landscape (approx 297mm - margins) */
-        width: 1080px !important; 
-        min-width: 1080px !important;
-        max-width: 1080px !important;
-        margin: 0 auto;
+        /* Professional A4 sizing (210mm x 297mm) with proper margins */
+        width: 210mm !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 20mm 18mm !important;
         background-color: white !important;
         background-image: none !important;
-        padding: 0px !important;
-        color: black !important;
-      }
-      
-      .pdf-exporting .no-print {
-        display: none !important;
+        color: #1e293b !important;
+        font-family: 'Merriweather', serif !important;
       }
 
-      /* REMOVED LINEARIZATION - KEEP GRID STRUCTURE */
-      
-      /* Ensure Grid works but without sticky positioning which breaks PDF capture */
-      .pdf-exporting .sticky {
-        position: static !important;
-      }
-      
-      /* Fix Sidebar Height for Static Positioning */
-      .pdf-exporting .lg\:col-span-4 {
-         height: auto !important;
+      /* Professional Document Layout */
+      .pdf-exporting {
+        line-height: 1.6 !important; /* Research shows 1.2-1.6 improves readability */
       }
 
-      /* Visual Cleanups for PDF */
-      .pdf-exporting .shadow-sm, 
-      .pdf-exporting .shadow-lg, 
-      .pdf-exporting .shadow-xl {
-        box-shadow: none !important;
-        border: 1px solid #e2e8f0 !important;
-      }
-      
-      .pdf-exporting .bg-white {
-        background-color: transparent !important;
-        border: none !important; /* Optional: Keep borders or remove for cleaner look */
-      }
-      
-      /* Improve typography for PDF reading */
+      /* Typography: Use 2-3 fonts max - we use Merriweather for body, headings */
       .pdf-exporting h1 {
-        font-size: 24pt !important;
-        margin-bottom: 16px !important;
+        font-family: 'Merriweather', serif !important;
+        font-size: 28pt !important;
+        font-weight: 900 !important;
         color: #0f172a !important;
-      }
-      
-      .pdf-exporting h2 {
-        font-size: 18pt !important;
-        border-bottom: 2px solid #fbbf24 !important;
-        padding-bottom: 8px !important;
-        margin-bottom: 16px !important;
-        color: #0f172a !important;
-        margin-top: 24px !important;
+        margin-top: 0 !important;
+        margin-bottom: 12pt !important;
+        line-height: 1.2 !important;
+        padding-bottom: 0 !important;
       }
 
-      .pdf-exporting p, 
+      .pdf-exporting h2 {
+        font-family: 'Merriweather', serif !important;
+        font-size: 18pt !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        margin-top: 20pt !important;
+        margin-bottom: 10pt !important;
+        padding-top: 8pt !important;
+        padding-bottom: 6pt !important;
+        border-top: 2pt solid #d97706 !important;
+        border-bottom: none !important;
+        page-break-after: avoid !important;
+      }
+
+      .pdf-exporting h3 {
+        font-family: 'Merriweather', serif !important;
+        font-size: 14pt !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        margin-top: 12pt !important;
+        margin-bottom: 8pt !important;
+        page-break-after: avoid !important;
+      }
+
+      .pdf-exporting h4 {
+        font-size: 12pt !important;
+        font-weight: 600 !important;
+        margin-top: 10pt !important;
+        margin-bottom: 6pt !important;
+      }
+
+      /* Body text: Optimal for readability (30-75 characters per line) */
+      .pdf-exporting p {
+        font-size: 11pt !important;
+        line-height: 1.65 !important;
+        margin: 0 0 10pt 0 !important;
+        color: #1e293b !important;
+        text-align: justify !important;
+        orphans: 3 !important;
+        widows: 3 !important;
+      }
+
+      /* Lists */
+      .pdf-exporting ul, .pdf-exporting ol {
+        margin: 10pt 0 10pt 20pt !important;
+        padding: 0 !important;
+      }
+
       .pdf-exporting li {
         font-size: 11pt !important;
-        line-height: 1.5 !important;
+        line-height: 1.6 !important;
+        margin-bottom: 6pt !important;
         color: #1e293b !important;
       }
 
-      /* Hide Chat Widget in PDF */
-      .pdf-exporting .chat-widget-root {
+      /* Code blocks */
+      .pdf-exporting code {
+        font-family: 'Courier New', monospace !important;
+        font-size: 10pt !important;
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+      }
+
+      .pdf-exporting pre {
+        background-color: #f1f5f9 !important;
+        border: 1pt solid #cbd5e1 !important;
+        padding: 8pt !important;
+        margin: 10pt 0 !important;
+        font-size: 9pt !important;
+        overflow-x: visible !important;
+        word-wrap: break-word !important;
+      }
+
+      /* White space and visual separation */
+      .pdf-exporting .print-content > div {
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Cards/boxes for PDF */
+      .pdf-exporting .bg-white,
+      .pdf-exporting [class*="bg-"] {
+        background-color: white !important;
+        background-image: none !important;
+        border: 1pt solid #e2e8f0 !important;
+        box-shadow: none !important;
+        padding: 12pt !important;
+        margin-bottom: 12pt !important;
+        page-break-inside: avoid !important;
+      }
+
+      .pdf-exporting .bg-slate-50 {
+        background-color: #f8fafc !important;
+        border: 1pt solid #e2e8f0 !important;
+      }
+
+      .pdf-exporting .bg-blue-50 {
+        background-color: #eff6ff !important;
+        border: 1pt solid #bfdbfe !important;
+      }
+
+      /* Remove all shadows in PDF */
+      .pdf-exporting [class*="shadow"] {
+        box-shadow: none !important;
+      }
+
+      /* Grid layout for PDF */
+      .pdf-exporting .grid {
+        display: block !important;
+      }
+
+      .pdf-exporting .lg\:col-span-4,
+      .pdf-exporting .lg\:col-span-8 {
+        width: 100% !important;
+        margin-bottom: 16pt !important;
+      }
+
+      /* Hide interactive elements */
+      .pdf-exporting .no-print,
+      .pdf-exporting .chat-widget-root,
+      .pdf-exporting .print\:hidden {
         display: none !important;
+      }
+
+      /* Sticky positioning doesn't work in PDF */
+      .pdf-exporting .sticky {
+        position: static !important;
+      }
+
+      /* Improve table appearance */
+      .pdf-exporting table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 10pt 0 !important;
+      }
+
+      .pdf-exporting th {
+        background-color: #0f172a !important;
+        color: white !important;
+        padding: 8pt !important;
+        text-align: left !important;
+        font-weight: 700 !important;
+      }
+
+      .pdf-exporting td {
+        padding: 8pt !important;
+        border-bottom: 1pt solid #e2e8f0 !important;
+      }
+
+      /* Professional metadata section */
+      .pdf-exporting .metadata,
+      .pdf-exporting [class*="sidebar"] {
+        margin-bottom: 20pt !important;
+        padding: 12pt !important;
+        border-top: 3pt solid #d97706 !important;
+      }
+
+      /* Page breaks for sections */
+      .pdf-exporting h2:not(:first-child) {
+        page-break-before: avoid !important;
+      }
+
+      /* Prevent orphaned text/headings */
+      .pdf-exporting h2, .pdf-exporting h3 {
+        page-break-after: avoid !important;
+      }
+
+      .pdf-exporting [class*="flex"],
+      .pdf-exporting [class*="grid"] {
+        display: block !important;
+      }
+
+      /* Professional document footer notes */
+      .pdf-exporting .disclaimer {
+        font-size: 9pt !important;
+        color: #64748b !important;
+        margin-top: 16pt !important;
+        padding-top: 12pt !important;
+        border-top: 1pt solid #cbd5e1 !important;
+        font-style: italic !important;
       }
 
       /* Dark Mode Component Styles */

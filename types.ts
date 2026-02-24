@@ -78,6 +78,12 @@ export interface ContentSection {
   content: string; // Markdown supported
 }
 
+export interface SearchSource {
+  title: string;
+  url: string;
+  source: string;
+}
+
 export interface LessonResponse {
   title: string;
   module: string;
@@ -94,6 +100,7 @@ export interface LessonResponse {
   commonMistakes: string[];
   discussionQuestions: string[];
   conclusion: string;
+  sourceLinks?: SearchSource[]; // Web search sources
 }
 
 export interface ChatMessage {

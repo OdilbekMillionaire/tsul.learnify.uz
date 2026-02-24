@@ -254,6 +254,11 @@ export const generateLesson = async (form: LessonFormState, language: Language):
       lesson.bibliography = searchBibliography;
     }
 
+    // Add source links for display in UI
+    if (searchResults.length > 0) {
+      lesson.sourceLinks = searchResults;
+    }
+
     return lesson;
   } catch (err: any) {
     console.warn("Gemini Pro failed:", err.message);
@@ -279,6 +284,11 @@ export const generateLesson = async (form: LessonFormState, language: Language):
           lesson.bibliography = searchBibliography;
         }
 
+        // Add source links for display in UI
+        if (searchResults.length > 0) {
+          lesson.sourceLinks = searchResults;
+        }
+
         return lesson;
       } catch (openaiErr: any) {
         console.warn("OpenAI failed:", openaiErr.message);
@@ -294,6 +304,11 @@ export const generateLesson = async (form: LessonFormState, language: Language):
             lesson.bibliography = [...new Set([...lesson.bibliography, ...searchBibliography])].slice(0, 15);
           } else if (searchBibliography.length > 0) {
             lesson.bibliography = searchBibliography;
+          }
+
+          // Add source links for display in UI
+          if (searchResults.length > 0) {
+            lesson.sourceLinks = searchResults;
           }
 
           return lesson;

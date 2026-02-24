@@ -63,8 +63,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
   };
 
   return (
-    <div className="flex flex-col h-[600px] print:h-auto bg-white dark:bg-slate-800 chat-widget-root">
-      <div className="flex-grow overflow-y-auto print:overflow-visible p-6 space-y-6 bg-slate-50/50 dark:bg-slate-700/50 chat-messages-area">
+    <div className="flex flex-col h-[600px] print:h-auto bg-white chat-widget-root">
+      <div className="flex-grow overflow-y-auto print:overflow-visible p-6 space-y-6 bg-slate-50/50 chat-messages-area">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
             {msg.role === 'model' && (
@@ -75,7 +75,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
             <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
               msg.role === 'user'
                 ? 'bg-navy-900 text-white rounded-br-sm'
-                : 'bg-white text-slate-700 border border-slate-200 rounded-bl-sm dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700'
+                : 'bg-white text-slate-700 border border-slate-200 rounded-bl-sm'
             }`}>
               {msg.role === 'user' ? (
                 <div className="whitespace-pre-wrap">{msg.content}</div>
@@ -116,12 +116,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 print:hidden no-print">
-        <div className="flex gap-2 items-end bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2 focus-within:ring-2 focus-within:ring-gold-500/50 focus-within:border-gold-500 transition-all shadow-sm">
+      <div className="p-4 bg-white border-t border-slate-100 print:hidden no-print">
+        <div className="flex gap-2 items-end bg-slate-50 border border-slate-200 rounded-xl p-2 focus-within:ring-2 focus-within:ring-gold-500/50 focus-within:border-gold-500 transition-all shadow-sm">
             <textarea
             ref={textareaRef}
             rows={1}
-            className="flex-grow bg-transparent border-none outline-none text-sm resize-none p-2 max-h-[120px] dark:text-slate-100 dark:placeholder-slate-500"
+            className="flex-grow bg-transparent border-none outline-none text-sm resize-none p-2 max-h-[120px]"
             placeholder={t.typeQuestion}
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -137,7 +137,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
             </svg>
             </button>
         </div>
-        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-2">
+        <p className="text-center text-[10px] text-slate-400 mt-2">
             AI can make mistakes. Please verify important legal information.
         </p>
       </div>
