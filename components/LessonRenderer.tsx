@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LessonResponse, Language, ChatMessage } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ChatWidget } from './ChatWidget';
@@ -11,6 +11,124 @@ interface LessonRendererProps {
   chatHistory: ChatMessage[];
   onChatHistoryChange: (messages: ChatMessage[]) => void;
 }
+
+const markdownComponents = {
+  p: ({node, ...props}: any) => <p className="text-slate-700 mb-4 last:mb-0 leading-relaxed text-justify" {...props} />,
+  strong: ({node, ...props}: any) => <strong className="font-bold text-gold-700 bg-gold-50 px-1 rounded" {...props} />,
+  em: ({node, ...props}: any) => <em className="italic text-slate-600" {...props} />,
+  ul: ({node, ...props}: any) => <ul className="list-none my-3 space-y-2" {...props} />,
+  ol: ({node, ...props}: any) => <ol className="list-decimal list-outside my-3 ml-6 space-y-2" {...props} />,
+  li: ({node, ...props}: any) => <li className="text-slate-700 mb-1 leading-relaxed" {...props} />,
+  code: ({node, inline, ...props}: any) =>
+    inline ?
+      <code className="bg-slate-100 px-2 py-1 rounded text-sm font-mono text-slate-800 border border-slate-200" {...props} /> :
+      <code className="block bg-slate-900 text-slate-100 p-4 rounded-lg text-xs font-mono overflow-x-auto my-4 border border-slate-700" {...props} />
+};
+
+// NEW FEATURE 1: Copy to clipboard helper
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+};
+
+// NEW FEATURE 3: Interactive table of contents
+const TableOfContents = ({ data, currentLang }: { data: LessonResponse; currentLang: Language }) => {
+  const t = TRANSLATIONS[currentLang];
+  const sections = [
+    { id: 'definition', label: data.definitionAndStructure.title },
+    { id: 'historical', label: data.historicalDevelopment.title },
+    { id: 'comparative', label: t.comparativeAnalysis, enabled: !!data.comparativeAnalysis },
+    { id: 'caselaw', label: t.caseLaw, enabled: data.courtCases && data.courtCases.length > 0 },
+    { id: 'practical', label: t.practicalExercises, enabled: data.practicalExercises && data.practicalExercises.length > 0 },
+    { id: 'doctrines', label: t.doctrines, enabled: data.legalDoctrines && data.legalDoctrines.length > 0 },
+    { id: 'glossary', label: t.glossary, enabled: data.glossary && data.glossary.length > 0 },
+    { id: 'bibliography', label: t.bibliography, enabled: data.bibliography && data.bibliography.length > 0 },
+    { id: 'conclusion', label: t.conclusion }
+  ];
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(`section-${id}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-slate-50 to-white p-6 rounded-xl border border-slate-200 shadow-sm no-print mb-8">
+      <h3 className="font-bold text-navy-900 text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+        <svg className="w-4 h-4 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+        Quick Navigation
+      </h3>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {sections.filter(s => s.enabled !== false).map(section => (
+          <button
+            key={section.id}
+            onClick={() => scrollToSection(section.id)}
+            className="text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:border-gold-400 hover:text-gold-600 transition-colors"
+          >
+            {section.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// NEW FEATURE 2: Key Takeaways Summary
+const KeyTakeaways = ({ objectives }: { objectives: string[] }) => {
+  if (!objectives || objectives.length === 0) return null;
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-200 shadow-sm mb-8 no-print">
+      <h3 className="font-bold text-navy-900 text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
+        <span>✨</span> Key Takeaways
+      </h3>
+      <ul className="space-y-2">
+        {objectives.slice(0, 3).map((obj, i) => (
+          <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+            <span className="text-gold-600 font-bold mt-0.5">→</span>
+            <span>{obj}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+// NEW FEATURE 4: Section copy button
+const SectionHeader = ({ icon, title, sectionId, content }: { icon: string; title: string; sectionId: string; content: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    copyToClipboard(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-gold-100 flex items-center justify-center">
+          <span className="text-lg">{icon}</span>
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-navy-900">{title}</h2>
+      </div>
+      <button
+        onClick={handleCopy}
+        className="p-2 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors no-print"
+        title="Copy section to clipboard"
+      >
+        {copied ? (
+          <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+};
 
 export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLang, onBack, chatHistory, onChatHistoryChange }) => {
   const t = TRANSLATIONS[currentLang];
@@ -31,7 +149,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
           </div>
           {t.back}
         </button>
-        
+
         <div className="flex gap-3">
           <button
             onClick={handleDownload}
@@ -45,9 +163,15 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
         </div>
       </div>
 
+      {/* NEW FEATURE 1: Key Takeaways */}
+      <KeyTakeaways objectives={data.objectives} />
+
+      {/* NEW FEATURE 3: Table of Contents */}
+      <TableOfContents data={data} currentLang={currentLang} />
+
       <div id="lesson-content-area" className="print-content grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-        
+
         {/* SIDEBAR (Left on desktop) */}
         <div className="lg:col-span-4 print:col-span-4 space-y-6">
           {/* Metadata Card */}
@@ -98,96 +222,56 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
         <div className="lg:col-span-8 print:col-span-8 space-y-8 print:space-y-6">
             
             {/* Definition */}
-            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
-                <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
-                    <span className="w-1 h-8 bg-gold-500 rounded-full print:bg-gold-500"></span>
-                    {data.definitionAndStructure.title}
-                </h2>
-                <ReactMarkdown
-                  components={{
-                    p: ({node, ...props}: any) => <p className="mb-4 last:mb-0" {...props} />,
-                    strong: ({node, ...props}: any) => <strong className="font-bold text-navy-900" {...props} />,
-                    em: ({node, ...props}: any) => <em className="italic" {...props} />,
-                    ul: ({node, ...props}: any) => <ul className="list-disc list-inside my-3 ml-2" {...props} />,
-                    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside my-3 ml-2" {...props} />,
-                    li: ({node, ...props}: any) => <li className="mb-2 ml-2" {...props} />,
-                    code: ({node, inline, ...props}: any) =>
-                      inline ?
-                        <code className="bg-slate-100 px-2 py-0.5 rounded text-xs font-mono" {...props} /> :
-                        <code className="block bg-slate-100 p-3 rounded text-xs font-mono overflow-x-auto my-3" {...props} />
-                  }}
-                >
-                  {data.definitionAndStructure.content}
-                </ReactMarkdown>
+            <div id="section-definition" className="bg-gradient-to-br from-white to-slate-50 p-8 md:p-10 rounded-xl border border-gold-100 shadow-sm hover:shadow-md transition-shadow print:shadow-none print:border print:p-6">
+                <SectionHeader icon="📖" title={data.definitionAndStructure.title} sectionId="definition" content={data.definitionAndStructure.content} />
+                <div className="pl-0 md:pl-2">
+                  <ReactMarkdown components={markdownComponents}>
+                    {data.definitionAndStructure.content}
+                  </ReactMarkdown>
+                </div>
             </div>
 
             {/* Historical Development */}
-            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
-                <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
-                    <span className="w-1 h-8 bg-gold-500 rounded-full"></span>
-                    {data.historicalDevelopment.title}
-                </h2>
-                <ReactMarkdown
-                  components={{
-                    p: ({node, ...props}: any) => <p className="mb-4 last:mb-0" {...props} />,
-                    strong: ({node, ...props}: any) => <strong className="font-bold text-navy-900" {...props} />,
-                    em: ({node, ...props}: any) => <em className="italic" {...props} />,
-                    ul: ({node, ...props}: any) => <ul className="list-disc list-inside my-3 ml-2" {...props} />,
-                    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside my-3 ml-2" {...props} />,
-                    li: ({node, ...props}: any) => <li className="mb-2 ml-2" {...props} />,
-                    code: ({node, inline, ...props}: any) =>
-                      inline ?
-                        <code className="bg-slate-100 px-2 py-0.5 rounded text-xs font-mono" {...props} /> :
-                        <code className="block bg-slate-100 p-3 rounded text-xs font-mono overflow-x-auto my-3" {...props} />
-                  }}
-                >
-                  {data.historicalDevelopment.content}
-                </ReactMarkdown>
+            <div id="section-historical" className="bg-gradient-to-br from-white to-slate-50 p-8 md:p-10 rounded-xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow print:shadow-none print:border print:p-6">
+                <SectionHeader icon="📜" title={data.historicalDevelopment.title} sectionId="historical" content={data.historicalDevelopment.content} />
+                <div className="pl-0 md:pl-2">
+                  <ReactMarkdown components={markdownComponents}>
+                    {data.historicalDevelopment.content}
+                  </ReactMarkdown>
+                </div>
             </div>
 
             {/* Comparative Analysis (Optional) */}
             {data.comparativeAnalysis && (
-                <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
-                    <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
-                        <span className="w-1 h-8 bg-purple-500 rounded-full"></span>
-                        {data.comparativeAnalysis.title || t.comparativeAnalysis}
-                    </h2>
-                    <ReactMarkdown
-                      components={{
-                        p: ({node, ...props}: any) => <p className="mb-4 last:mb-0" {...props} />,
-                        strong: ({node, ...props}: any) => <strong className="font-bold text-navy-900" {...props} />,
-                        em: ({node, ...props}: any) => <em className="italic" {...props} />,
-                        ul: ({node, ...props}: any) => <ul className="list-disc list-inside my-3 ml-2" {...props} />,
-                        ol: ({node, ...props}: any) => <ol className="list-decimal list-inside my-3 ml-2" {...props} />,
-                        li: ({node, ...props}: any) => <li className="mb-2 ml-2" {...props} />,
-                        code: ({node, inline, ...props}: any) =>
-                          inline ?
-                            <code className="bg-slate-100 px-2 py-0.5 rounded text-xs font-mono" {...props} /> :
-                            <code className="block bg-slate-100 p-3 rounded text-xs font-mono overflow-x-auto my-3" {...props} />
-                      }}
-                    >
-                      {data.comparativeAnalysis.content}
-                    </ReactMarkdown>
+                <div id="section-comparative" className="bg-gradient-to-br from-purple-50 to-white p-8 md:p-10 rounded-xl border border-purple-100 shadow-sm hover:shadow-md transition-shadow print:shadow-none print:border print:p-6">
+                    <SectionHeader icon="⚖️" title={data.comparativeAnalysis.title || t.comparativeAnalysis} sectionId="comparative" content={data.comparativeAnalysis.content} />
+                    <div className="pl-0 md:pl-2">
+                      <ReactMarkdown components={markdownComponents}>
+                        {data.comparativeAnalysis.content}
+                      </ReactMarkdown>
+                    </div>
                 </div>
             )}
 
             {/* Case Law Grid */}
             {data.courtCases && data.courtCases.length > 0 && (
-                <div className="space-y-4 print:break-inside-avoid">
-                    <h2 className="font-serif text-2xl font-bold text-navy-900 mb-4 flex items-center gap-3 px-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-navy-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
-                        </svg>
-                        {t.caseLaw}
-                    </h2>
+                <div id="section-caselaw" className="print:break-inside-avoid">
+                    <div className="mb-6">
+                        <div className="flex items-center gap-3 px-2">
+                            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                                <span className="text-lg">⚔️</span>
+                            </div>
+                            <h2 className="font-serif text-2xl font-bold text-navy-900">{t.caseLaw}</h2>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4">
                         {data.courtCases.map((c, i) => (
-                            <div key={i} className="bg-slate-50 p-6 rounded-xl border border-slate-200 hover:border-gold-300 transition-colors group print:border-slate-300 print:bg-slate-50">
+                            <div key={i} className="bg-gradient-to-br from-white to-red-50 p-6 rounded-xl border border-red-100 hover:border-red-300 hover:shadow-md transition-all group print:border-red-200 print:bg-white">
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{c.year}</span>
+                                    <span className="text-xs font-bold text-red-600 uppercase tracking-wider bg-red-100 px-2 py-1 rounded">{c.year}</span>
                                     <span className="text-[10px] font-semibold text-navy-800 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-sm">{c.court}</span>
                                 </div>
-                                <h3 className="font-serif font-bold text-lg text-navy-900 mb-3 group-hover:text-gold-600 transition-colors">{c.name}</h3>
+                                <h3 className="font-serif font-bold text-lg text-navy-900 mb-3 group-hover:text-red-600 transition-colors">{c.name}</h3>
                                 <div className="space-y-2 text-sm text-slate-600">
                                     <p><span className="font-semibold text-navy-900">Issue:</span> {c.legalIssue}</p>
                                     <p><span className="font-semibold text-navy-900">Holding:</span> {c.holding}</p>
@@ -200,21 +284,24 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Practical Exercises (Optional) */}
             {data.practicalExercises && data.practicalExercises.length > 0 && (
-                 <div className="bg-blue-50 p-8 rounded-xl border border-blue-100 print:bg-blue-50 print:border-blue-200 print:break-inside-avoid">
-                    <h2 className="font-serif text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        {t.practicalExercises}
-                    </h2>
+                 <div id="section-practical" className="bg-gradient-to-br from-cyan-50 to-white p-8 md:p-10 rounded-xl border border-cyan-100 shadow-sm print:bg-white print:border-slate-200 print:break-inside-avoid">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                            <span className="text-lg">💡</span>
+                        </div>
+                        <h2 className="font-serif text-2xl font-bold text-navy-900">{t.practicalExercises}</h2>
+                    </div>
                     <div className="space-y-6">
                         {data.practicalExercises.map((ex, i) => (
-                            <div key={i} className="bg-white p-6 rounded-lg shadow-sm print:border print:border-slate-200 print:shadow-none">
-                                <h4 className="font-bold text-navy-900 mb-2">Scenario {i+1}:</h4>
-                                <p className="text-slate-700 italic mb-4 text-sm">{ex.question}</p>
-                                <div className="bg-slate-50 p-4 rounded text-sm text-slate-600 border-l-2 border-gold-500 print:bg-slate-50">
-                                    <span className="font-bold text-gold-700 block mb-1">Answer / Guidance:</span>
-                                    {ex.answer}
+                            <div key={i} className="bg-white p-6 rounded-lg shadow-sm border border-slate-100 hover:shadow-md transition-shadow print:border-slate-200 print:shadow-none">
+                                <div className="flex items-start gap-3 mb-3">
+                                    <span className="inline-block w-8 h-8 bg-cyan-100 text-cyan-700 rounded-lg font-bold text-sm flex items-center justify-center flex-shrink-0">{i+1}</span>
+                                    <h4 className="font-bold text-navy-900">Scenario</h4>
+                                </div>
+                                <p className="text-slate-700 italic mb-4 text-sm ml-11">{ex.question}</p>
+                                <div className="bg-slate-50 p-4 rounded text-sm text-slate-600 border-l-4 border-cyan-500 print:bg-slate-50 ml-2">
+                                    <span className="font-bold text-navy-900 block mb-2">✓ Answer / Guidance:</span>
+                                    <div className="ml-2">{ex.answer}</div>
                                 </div>
                             </div>
                         ))}
@@ -224,19 +311,24 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Doctrines */}
             {data.legalDoctrines && data.legalDoctrines.length > 0 && (
-                <div className="bg-[#fffbf0] p-8 rounded-xl border border-gold-100 relative overflow-hidden print:bg-[#fffbf0] print:border-gold-200 print:break-inside-avoid">
+                <div id="section-doctrines" className="bg-gradient-to-br from-amber-50 to-white p-8 md:p-10 rounded-xl border border-amber-100 shadow-sm relative overflow-hidden print:bg-white print:border-slate-200 print:break-inside-avoid">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
                         <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg>
                     </div>
-                    <h2 className="font-serif text-2xl font-bold text-gold-800 mb-6 relative z-10">{t.doctrines}</h2>
+                    <div className="flex items-center gap-3 mb-6 relative z-10">
+                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                            <span className="text-lg">📚</span>
+                        </div>
+                        <h2 className="font-serif text-2xl font-bold text-navy-900">{t.doctrines}</h2>
+                    </div>
                     <div className="space-y-6 relative z-10">
                         {data.legalDoctrines.map((d, i) => (
-                            <div key={i} className="border-l-4 border-gold-400 pl-4 py-1">
-                                <h4 className="font-serif font-bold text-lg text-navy-900">{d.name}</h4>
-                                <p className="text-slate-700 mt-1 italic">{d.definition}</p>
-                                <div className="mt-2 flex gap-4 text-xs">
-                                    <span className="text-gold-700 font-semibold">Origin: {d.origin}</span>
-                                    <span className="text-slate-500">Status: {d.currentStatus}</span>
+                            <div key={i} className="bg-white p-5 rounded-lg border-l-4 border-amber-400 shadow-sm hover:shadow-md transition-shadow print:border-l-4 print:border-amber-300 print:bg-white print:shadow-none">
+                                <h4 className="font-serif font-bold text-lg text-navy-900 mb-2">{d.name}</h4>
+                                <p className="text-slate-700 mb-3 italic text-sm">{d.definition}</p>
+                                <div className="flex flex-wrap gap-3 text-xs">
+                                    <span className="bg-amber-100 text-amber-900 px-2.5 py-1 rounded font-semibold">Origin: {d.origin}</span>
+                                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-semibold">Status: {d.currentStatus}</span>
                                 </div>
                             </div>
                         ))}
@@ -246,13 +338,18 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
              {/* Glossary (Optional) */}
              {data.glossary && data.glossary.length > 0 && (
-                <div className="bg-white p-8 rounded-xl border border-slate-200 print:border print:shadow-none">
-                    <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6">{t.glossary}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <div id="section-glossary" className="bg-gradient-to-br from-green-50 to-white p-8 md:p-10 rounded-xl border border-green-100 shadow-sm print:bg-white print:border-slate-200 print:shadow-none">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                            <span className="text-lg">📖</span>
+                        </div>
+                        <h2 className="font-serif text-2xl font-bold text-navy-900">{t.glossary}</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {data.glossary.map((item, i) => (
-                            <div key={i} className="flex flex-col border-b border-slate-100 pb-2 last:border-0">
-                                <span className="font-bold text-navy-800 text-sm">{item.term}</span>
-                                <span className="text-slate-600 text-xs">{item.definition}</span>
+                            <div key={i} className="bg-white p-4 rounded-lg border border-green-100 hover:border-green-300 hover:shadow-sm transition-all print:border-green-100 print:bg-white">
+                                <span className="font-bold text-navy-900 text-sm block mb-1.5">{item.term}</span>
+                                <span className="text-slate-600 text-xs leading-relaxed">{item.definition}</span>
                             </div>
                         ))}
                     </div>
@@ -261,20 +358,33 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
              {/* Bibliography (Optional) */}
              {data.bibliography && data.bibliography.length > 0 && (
-                <div className="bg-slate-50 p-8 rounded-xl border border-slate-200 print:bg-slate-50 print:border">
-                    <h2 className="font-serif text-xl font-bold text-navy-900 mb-4">{t.bibliography}</h2>
-                    <ul className="list-disc list-inside space-y-2 text-sm text-slate-700">
+                <div id="section-bibliography" className="bg-gradient-to-br from-indigo-50 to-white p-8 md:p-10 rounded-xl border border-indigo-100 shadow-sm print:bg-white print:border-slate-200 print:shadow-none">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <span className="text-lg">📕</span>
+                        </div>
+                        <h2 className="font-serif text-2xl font-bold text-navy-900">{t.bibliography}</h2>
+                    </div>
+                    <div className="space-y-2">
                         {data.bibliography.map((item, i) => (
-                            <li key={i}>{item}</li>
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-indigo-50 transition-colors print:hover:bg-white">
+                                <span className="flex-shrink-0 inline-block w-6 h-6 bg-indigo-200 text-indigo-800 rounded-full text-xs font-bold flex items-center justify-center mt-0.5">{i+1}</span>
+                                <span className="text-sm text-slate-700 leading-relaxed pt-0.5">{item}</span>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 </div>
             )}
 
             {/* Conclusion */}
-            <div className="bg-navy-900 text-slate-300 p-8 rounded-xl border border-navy-800 shadow-lg print:bg-navy-900 print:text-slate-300 print:break-inside-avoid">
-                <h2 className="font-serif text-xl font-bold text-white mb-4">{t.conclusion}</h2>
-                <p className="leading-relaxed text-justify font-light">
+            <div id="section-conclusion" className="bg-gradient-to-br from-navy-900 to-navy-800 text-slate-300 p-8 md:p-10 rounded-xl border border-navy-700 shadow-lg print:bg-navy-900 print:text-slate-300 print:border-slate-300 print:break-inside-avoid">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center">
+                        <span className="text-lg">🎓</span>
+                    </div>
+                    <h2 className="font-serif text-2xl font-bold text-white">{t.conclusion}</h2>
+                </div>
+                <p className="leading-relaxed text-justify font-light text-slate-300">
                     {data.conclusion}
                 </p>
             </div>
