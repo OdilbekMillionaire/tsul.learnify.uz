@@ -48,353 +48,148 @@
       }
     </script>
     <style>
-      /* Dark Mode Variables */
-      :root {
-        color-scheme: light;
-      }
-
-      html[data-theme="dark"],
-      html.dark {
-        color-scheme: dark;
-      }
-
-      html.dark {
-        --bg-primary: #0f172a;
-        --bg-secondary: #1e293b;
-        --text-primary: #f1f5f9;
-        --text-secondary: #cbd5e1;
-        --border: #334155;
-      }
-
-      /* Premium Background Texture */
+      /* Clean Light Theme Only */
       body {
         background-color: #f8fafc;
         background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
         background-size: 24px 24px;
-        transition: background-color 0.3s, color 0.3s;
       }
 
-      html.dark body {
-        background-color: #0f172a;
-        background-image: radial-gradient(#1e293b 1px, transparent 1px);
-      }
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-      html.dark {
-        background-color: #0f172a;
-        color: #f1f5f9;
-      }
-
-      html.dark body {
-        color: #f1f5f9;
-      }
-
-      /* Custom scrollbar for academic feel */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #cbd5e1; 
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8; 
-      }
-
-      /* Print Styles (Fallback) */
+      /* ============================================
+         PRINT / PDF STYLES
+         Using native window.print() for crisp text
+         ============================================ */
       @media print {
         @page {
-          margin: 10mm;
-          size: auto;
+          size: A4 portrait;
+          margin: 15mm 12mm;
         }
-        body {
-          background-color: white !important;
+
+        html, body {
+          background: white !important;
           background-image: none !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
+          font-size: 11pt !important;
+          line-height: 1.5 !important;
+          color: #1e293b !important;
         }
-        header, footer, .no-print { 
-          display: none !important; 
+
+        /* Hide non-print elements */
+        header, footer, .no-print, .chat-widget-root {
+          display: none !important;
         }
-        .print-content { 
+
+        /* Flatten grid to single column */
+        .print-content {
+          display: block !important;
           width: 100% !important;
+          max-width: 100% !important;
           padding: 0 !important;
           margin: 0 !important;
-          max-width: 100% !important;
+        }
+
+        .print-content > div {
+          display: block !important;
+          width: 100% !important;
+          float: none !important;
+        }
+
+        /* Reset containers */
+        .print-content .sticky { position: static !important; }
+        .print-content [class*="shadow"] { box-shadow: none !important; }
+        .print-content [class*="rounded"] { border-radius: 4px !important; }
+        .print-content .animate-fade-in-up { animation: none !important; }
+
+        /* Section cards */
+        .print-content .bg-white,
+        .print-content [class*="bg-slate"],
+        .print-content [class*="bg-blue"] {
+          background: white !important;
+          border: 1px solid #cbd5e1 !important;
           box-shadow: none !important;
+          margin-bottom: 12pt !important;
+          padding: 16pt !important;
+          page-break-inside: avoid !important;
+        }
+
+        /* Special backgrounds get light tints */
+        .print-content .bg-navy-900 {
+          background-color: #0f172a !important;
+          color: white !important;
           border: none !important;
         }
-        .print-break-inside-avoid {
-          break-inside: avoid;
+
+        .print-content .bg-\[\#fffbf0\] {
+          background-color: #fffbf0 !important;
+          border: 1px solid #fbbf24 !important;
         }
+
+        /* Typography */
+        h1 {
+          font-size: 22pt !important;
+          font-weight: 900 !important;
+          color: #0f172a !important;
+          margin-bottom: 8pt !important;
+          line-height: 1.2 !important;
+        }
+
+        h2 {
+          font-size: 16pt !important;
+          font-weight: 700 !important;
+          color: #0f172a !important;
+          margin-top: 16pt !important;
+          margin-bottom: 8pt !important;
+          border-bottom: 2px solid #d97706 !important;
+          padding-bottom: 4pt !important;
+          page-break-after: avoid !important;
+        }
+
+        h3 {
+          font-size: 13pt !important;
+          font-weight: 700 !important;
+          page-break-after: avoid !important;
+        }
+
+        p {
+          font-size: 11pt !important;
+          line-height: 1.6 !important;
+          margin-bottom: 8pt !important;
+          orphans: 3 !important;
+          widows: 3 !important;
+        }
+
+        ul, ol {
+          margin: 8pt 0 8pt 16pt !important;
+        }
+
+        li {
+          font-size: 11pt !important;
+          line-height: 1.5 !important;
+          margin-bottom: 4pt !important;
+        }
+
+        /* Source links print as text */
+        .sources-print-list {
+          display: block !important;
+        }
+        .sources-interactive {
+          display: none !important;
+        }
+
+        /* Hide decorative elements */
+        .print-content svg.opacity-5 { display: none !important; }
       }
 
-      /* PROFESSIONAL PDF EXPORT STYLING - Based on Design Best Practices */
-      .pdf-exporting {
-        /* Professional A4 sizing (210mm x 297mm) with proper margins */
-        width: 210mm !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 20mm 18mm !important;
-        background-color: white !important;
-        background-image: none !important;
-        color: #1e293b !important;
-        font-family: 'Merriweather', serif !important;
-      }
-
-      /* Professional Document Layout */
-      .pdf-exporting {
-        line-height: 1.6 !important; /* Research shows 1.2-1.6 improves readability */
-      }
-
-      /* Typography: Use 2-3 fonts max - we use Merriweather for body, headings */
-      .pdf-exporting h1 {
-        font-family: 'Merriweather', serif !important;
-        font-size: 28pt !important;
-        font-weight: 900 !important;
-        color: #0f172a !important;
-        margin-top: 0 !important;
-        margin-bottom: 12pt !important;
-        line-height: 1.2 !important;
-        padding-bottom: 0 !important;
-      }
-
-      .pdf-exporting h2 {
-        font-family: 'Merriweather', serif !important;
-        font-size: 18pt !important;
-        font-weight: 700 !important;
-        color: #0f172a !important;
-        margin-top: 20pt !important;
-        margin-bottom: 10pt !important;
-        padding-top: 8pt !important;
-        padding-bottom: 6pt !important;
-        border-top: 2pt solid #d97706 !important;
-        border-bottom: none !important;
-        page-break-after: avoid !important;
-      }
-
-      .pdf-exporting h3 {
-        font-family: 'Merriweather', serif !important;
-        font-size: 14pt !important;
-        font-weight: 700 !important;
-        color: #1e293b !important;
-        margin-top: 12pt !important;
-        margin-bottom: 8pt !important;
-        page-break-after: avoid !important;
-      }
-
-      .pdf-exporting h4 {
-        font-size: 12pt !important;
-        font-weight: 600 !important;
-        margin-top: 10pt !important;
-        margin-bottom: 6pt !important;
-      }
-
-      /* Body text: Optimal for readability (30-75 characters per line) */
-      .pdf-exporting p {
-        font-size: 11pt !important;
-        line-height: 1.65 !important;
-        margin: 0 0 10pt 0 !important;
-        color: #1e293b !important;
-        text-align: justify !important;
-        orphans: 3 !important;
-        widows: 3 !important;
-      }
-
-      /* Lists */
-      .pdf-exporting ul, .pdf-exporting ol {
-        margin: 10pt 0 10pt 20pt !important;
-        padding: 0 !important;
-      }
-
-      .pdf-exporting li {
-        font-size: 11pt !important;
-        line-height: 1.6 !important;
-        margin-bottom: 6pt !important;
-        color: #1e293b !important;
-      }
-
-      /* Code blocks */
-      .pdf-exporting code {
-        font-family: 'Courier New', monospace !important;
-        font-size: 10pt !important;
-        background-color: #f1f5f9 !important;
-        color: #334155 !important;
-      }
-
-      .pdf-exporting pre {
-        background-color: #f1f5f9 !important;
-        border: 1pt solid #cbd5e1 !important;
-        padding: 8pt !important;
-        margin: 10pt 0 !important;
-        font-size: 9pt !important;
-        overflow-x: visible !important;
-        word-wrap: break-word !important;
-      }
-
-      /* White space and visual separation */
-      .pdf-exporting .print-content > div {
-        margin-bottom: 0 !important;
-        padding: 0 !important;
-      }
-
-      /* Cards/boxes for PDF */
-      .pdf-exporting .bg-white,
-      .pdf-exporting [class*="bg-"] {
-        background-color: white !important;
-        background-image: none !important;
-        border: 1pt solid #e2e8f0 !important;
-        box-shadow: none !important;
-        padding: 12pt !important;
-        margin-bottom: 12pt !important;
-        page-break-inside: avoid !important;
-      }
-
-      .pdf-exporting .bg-slate-50 {
-        background-color: #f8fafc !important;
-        border: 1pt solid #e2e8f0 !important;
-      }
-
-      .pdf-exporting .bg-blue-50 {
-        background-color: #eff6ff !important;
-        border: 1pt solid #bfdbfe !important;
-      }
-
-      /* Remove all shadows in PDF */
-      .pdf-exporting [class*="shadow"] {
-        box-shadow: none !important;
-      }
-
-      /* Grid layout for PDF */
-      .pdf-exporting .grid {
-        display: block !important;
-      }
-
-      .pdf-exporting .lg\:col-span-4,
-      .pdf-exporting .lg\:col-span-8 {
-        width: 100% !important;
-        margin-bottom: 16pt !important;
-      }
-
-      /* Hide interactive elements */
-      .pdf-exporting .no-print,
-      .pdf-exporting .chat-widget-root,
-      .pdf-exporting .print\:hidden {
-        display: none !important;
-      }
-
-      /* Sticky positioning doesn't work in PDF */
-      .pdf-exporting .sticky {
-        position: static !important;
-      }
-
-      /* Improve table appearance */
-      .pdf-exporting table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        margin: 10pt 0 !important;
-      }
-
-      .pdf-exporting th {
-        background-color: #0f172a !important;
-        color: white !important;
-        padding: 8pt !important;
-        text-align: left !important;
-        font-weight: 700 !important;
-      }
-
-      .pdf-exporting td {
-        padding: 8pt !important;
-        border-bottom: 1pt solid #e2e8f0 !important;
-      }
-
-      /* Professional metadata section */
-      .pdf-exporting .metadata,
-      .pdf-exporting [class*="sidebar"] {
-        margin-bottom: 20pt !important;
-        padding: 12pt !important;
-        border-top: 3pt solid #d97706 !important;
-      }
-
-      /* Page breaks for sections */
-      .pdf-exporting h2:not(:first-child) {
-        page-break-before: avoid !important;
-      }
-
-      /* Prevent orphaned text/headings */
-      .pdf-exporting h2, .pdf-exporting h3 {
-        page-break-after: avoid !important;
-      }
-
-      .pdf-exporting [class*="flex"],
-      .pdf-exporting [class*="grid"] {
-        display: block !important;
-      }
-
-      /* Professional document footer notes */
-      .pdf-exporting .disclaimer {
-        font-size: 9pt !important;
-        color: #64748b !important;
-        margin-top: 16pt !important;
-        padding-top: 12pt !important;
-        border-top: 1pt solid #cbd5e1 !important;
-        font-style: italic !important;
-      }
-
-      /* Dark Mode Component Styles */
-      html.dark header {
-        background-color: rgba(15, 23, 42, 0.8) !important;
-        border-bottom-color: #334155 !important;
-      }
-
-      html.dark footer {
-        background-color: #0f172a !important;
-        border-top-color: #1e293b !important;
-      }
-
-      html.dark input,
-      html.dark select,
-      html.dark textarea {
-        background-color: #1e293b !important;
-        color: #f1f5f9 !important;
-        border-color: #334155 !important;
-      }
-
-      html.dark input::placeholder,
-      html.dark textarea::placeholder {
-        color: #94a3b8 !important;
-      }
-
-      html.dark .bg-white {
-        background-color: #1e293b !important;
-        border-color: #334155 !important;
-      }
-
-      html.dark .text-slate-900,
-      html.dark .text-navy-900 {
-        color: #f1f5f9 !important;
-      }
-
-      html.dark .text-slate-600,
-      html.dark .text-slate-500,
-      html.dark .text-slate-400 {
-        color: #cbd5e1 !important;
-      }
-
-      html.dark .hover\:bg-slate-50:hover {
-        background-color: #334155 !important;
-      }
-
-      html.dark .bg-slate-50 {
-        background-color: #1e293b !important;
-      }
-
-      html.dark .border-slate-200 {
-        border-color: #334155 !important;
-      }
+      /* Source links: show interactive version on screen, print version for PDF */
+      .sources-print-list { display: none; }
+      .sources-interactive { display: block; }
     </style>
 <script type="importmap">
 {

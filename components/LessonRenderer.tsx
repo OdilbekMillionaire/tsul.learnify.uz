@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { LessonResponse, Language, ChatMessage } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ChatWidget } from './ChatWidget';
@@ -14,44 +14,9 @@ interface LessonRendererProps {
 
 export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLang, onBack, chatHistory, onChatHistoryChange }) => {
   const t = TRANSLATIONS[currentLang];
-  const [isDownloading, setIsDownloading] = useState(false);
-  
+
   const handleDownload = () => {
-    setIsDownloading(true);
-    // Allow React to apply the pdf-exporting class before capturing
-    setTimeout(() => {
-        const element = document.getElementById('lesson-content-area');
-        
-        const opt = {
-          margin: [10, 10, 10, 10], // Standard 10mm margins
-          filename: `${data.title.replace(/[^a-z0-9]/gi, '_').substring(0, 30)}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { 
-            scale: 2, // High resolution
-            useCORS: true, 
-            scrollY: 0,
-            windowWidth: 1280 // Force Desktop width to capture grid correctly
-          },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, // LANDSCAPE MODE
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-        
-        // Check if html2pdf is loaded
-        // @ts-ignore
-        if (window.html2pdf) {
-            // @ts-ignore
-            window.html2pdf().set(opt).from(element).save().then(() => {
-                setIsDownloading(false);
-            }).catch((err: any) => {
-                console.error("PDF Export Error:", err);
-                setIsDownloading(false);
-            });
-        } else {
-            // Fallback
-            window.print();
-            setIsDownloading(false);
-        }
-    }, 200);
+    window.print();
   };
 
   return (
@@ -68,27 +33,20 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
         </button>
         
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={handleDownload}
-            disabled={isDownloading}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
           >
-             {isDownloading ? (
-               <svg className="animate-spin h-4 w-4 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-             ) : (
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-               </svg>
-             )}
-             {isDownloading ? 'Generating PDF...' : t.downloadPdf}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            {t.downloadPdf}
           </button>
         </div>
       </div>
 
-      <div 
-        id="lesson-content-area" 
-        className={`print-content grid grid-cols-1 lg:grid-cols-12 print:grid-cols-12 gap-8 print:gap-6 ${isDownloading ? 'pdf-exporting' : ''}`}
-      >
+      <div id="lesson-content-area" className="print-content grid grid-cols-1 lg:grid-cols-12 gap-8">
+
         
         {/* SIDEBAR (Left on desktop) */}
         <div className="lg:col-span-4 print:col-span-4 space-y-6">
@@ -323,46 +281,68 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Sources Section - Shows web search sources used to enrich the lesson */}
             {data.sourceLinks && data.sourceLinks.length > 0 && (
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-8 rounded-xl border border-slate-200 print:bg-slate-50 print:break-inside-avoid">
+                <div className="bg-gradient-to-br from-blue-50 to-slate-50 p-8 rounded-xl border border-blue-200">
                     <h2 className="font-serif text-2xl font-bold text-navy-900 mb-2 flex items-center gap-3">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.658 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                         </svg>
                         Research Sources
                     </h2>
-                    <p className="text-xs text-slate-500 mb-4 font-medium">Web sources used to enrich this lesson with current information</p>
-                    <div className="space-y-3">
+                    <p className="text-xs text-slate-500 mb-5 font-medium">
+                        Web sources automatically searched and used to enrich this lesson
+                    </p>
+
+                    {/* Interactive version (screen) */}
+                    <div className="sources-interactive space-y-3">
                         {data.sourceLinks.map((source, i) => (
                             <a
                                 key={i}
                                 href={source.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all group no-print"
+                                className="block p-4 bg-white rounded-lg border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all group"
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-blue-200 transition-colors">
-                                        <span className="text-xs font-bold text-blue-700">{i + 1}</span>
+                                    <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-blue-700 transition-colors">
+                                        <span className="text-xs font-bold text-white">{i + 1}</span>
                                     </div>
                                     <div className="flex-grow min-w-0">
                                         <h4 className="font-semibold text-sm text-navy-900 group-hover:text-blue-600 transition-colors break-words">
                                             {source.title}
                                         </h4>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded border border-blue-100">
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
                                                 {source.source}
                                             </span>
-                                            <p className="text-xs text-slate-500 break-all hover:text-slate-700">
+                                            <p className="text-xs text-blue-500 break-all truncate">
                                                 {source.url}
                                             </p>
                                         </div>
                                     </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 group-hover:text-blue-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
                                 </div>
                             </a>
                         ))}
                     </div>
-                    <p className="text-xs text-slate-500 mt-4 pt-4 border-t border-slate-200">
-                        ℹ️ These sources were automatically selected and used to enrich this lesson with relevant, current information.
+
+                    {/* Print-friendly version (PDF) */}
+                    <div className="sources-print-list">
+                        <ol className="list-decimal list-inside space-y-2 text-sm text-slate-700">
+                            {data.sourceLinks.map((source, i) => (
+                                <li key={i} className="leading-relaxed">
+                                    <span className="font-semibold">{source.title}</span>
+                                    <span className="text-slate-500"> ({source.source})</span>
+                                    <br />
+                                    <span className="text-blue-600 text-xs ml-5">{source.url}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 mt-5 pt-4 border-t border-blue-100">
+                        These sources were automatically searched and used to provide current, relevant information for this lesson.
                     </p>
                 </div>
             )}

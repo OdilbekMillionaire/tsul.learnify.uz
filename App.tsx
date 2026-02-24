@@ -8,10 +8,9 @@ import { LessonHistoryView } from './components/LessonHistoryView';
 import { Language, LessonFormState, LessonResponse, ViewState, ChatMessage, StoredLesson } from './types';
 import { generateLesson } from './services/geminiService';
 import { TRANSLATIONS } from './constants';
-import { ThemeProvider } from './contexts/ThemeContext';
 import { saveLesson, getAllLessons } from './services/lessonStorageService';
 
-const AppContent: React.FC = () => {
+const App: React.FC = () => {
   // State initialization
   const [currentLang, setCurrentLang] = useState<Language>(() => {
     const saved = localStorage.getItem('learnify_lang');
@@ -193,14 +192,6 @@ const AppContent: React.FC = () => {
     >
       {renderContent()}
     </Layout>
-  );
-};
-
-const App: React.FC = () => {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
   );
 };
 

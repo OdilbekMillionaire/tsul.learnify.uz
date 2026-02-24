@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Language, ViewState } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { ThemeToggle } from './ThemeToggle';
 import { formatCredits } from '../services/creditEstimator';
 
 interface LayoutProps {
@@ -110,9 +109,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangCha
               <span className="text-sm font-bold text-blue-600">{formatCredits(userCredits)}</span>
             </div>
           )}
-
-          {/* Theme Toggle */}
-          <ThemeToggle />
 
           {/* Language Selector */}
           <div className="relative" ref={langMenuRef}>

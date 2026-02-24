@@ -80,7 +80,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
               {msg.role === 'user' ? (
                 <div className="whitespace-pre-wrap">{msg.content}</div>
               ) : (
-                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:m-0 prose-p:mb-2 last:prose-p:mb-0">
+                <div className="prose prose-sm max-w-none prose-p:m-0 prose-p:mb-2 last:prose-p:mb-0">
                   <ReactMarkdown
                     components={{
                       p: ({node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
@@ -90,8 +90,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ currentLang, lessonConte
                       ol: ({node, ...props}: any) => <ol className="list-decimal list-inside my-2" {...props} />,
                       code: ({node, inline, ...props}: any) =>
                         inline ?
-                          <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded text-xs font-mono" {...props} /> :
-                          <code className="block bg-slate-100 dark:bg-slate-700 p-2 rounded text-xs font-mono overflow-x-auto my-2" {...props} />
+                          <code className="bg-slate-100 px-1 rounded text-xs font-mono" {...props} /> :
+                          <code className="block bg-slate-100 p-2 rounded text-xs font-mono overflow-x-auto my-2" {...props} />
                     }}
                   >
                     {msg.content}
