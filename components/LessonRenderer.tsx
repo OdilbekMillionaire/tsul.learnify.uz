@@ -279,73 +279,86 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                 </p>
             </div>
 
-            {/* Sources Section - Shows web search sources used to enrich the lesson */}
-            {data.sourceLinks && data.sourceLinks.length > 0 && (
-                <div className="bg-gradient-to-br from-blue-50 to-slate-50 p-8 rounded-xl border border-blue-200">
-                    <h2 className="font-serif text-2xl font-bold text-navy-900 mb-2 flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                        Research Sources
-                    </h2>
-                    <p className="text-xs text-slate-500 mb-5 font-medium">
-                        Web sources automatically searched and used to enrich this lesson
-                    </p>
+            {/* Sources Section - ALWAYS VISIBLE with debug info */}
+            <div className="bg-blue-50 p-8 rounded-xl border-2 border-blue-300">
+                <h2 className="font-serif text-2xl font-bold text-navy-900 mb-2 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    Research Sources Used
+                </h2>
 
-                    {/* Interactive version (screen) */}
-                    <div className="sources-interactive space-y-3">
-                        {data.sourceLinks.map((source, i) => (
-                            <a
-                                key={i}
-                                href={source.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block p-4 bg-white rounded-lg border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all group"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-blue-700 transition-colors">
-                                        <span className="text-xs font-bold text-white">{i + 1}</span>
-                                    </div>
-                                    <div className="flex-grow min-w-0">
-                                        <h4 className="font-semibold text-sm text-navy-900 group-hover:text-blue-600 transition-colors break-words">
-                                            {source.title}
-                                        </h4>
-                                        <div className="flex items-center gap-2 mt-1.5">
-                                            <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
-                                                {source.source}
-                                            </span>
-                                            <p className="text-xs text-blue-500 break-all truncate">
-                                                {source.url}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 group-hover:text-blue-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                </div>
-                            </a>
-                        ))}
-                    </div>
+                {data.sourceLinks && data.sourceLinks.length > 0 ? (
+                    <>
+                        <p className="text-sm text-slate-600 mb-5 font-medium">
+                            ✅ Found {data.sourceLinks.length} web sources to enrich this lesson
+                        </p>
 
-                    {/* Print-friendly version (PDF) */}
-                    <div className="sources-print-list">
-                        <ol className="list-decimal list-inside space-y-2 text-sm text-slate-700">
+                        {/* Interactive version (screen) */}
+                        <div className="sources-interactive space-y-3">
                             {data.sourceLinks.map((source, i) => (
-                                <li key={i} className="leading-relaxed">
-                                    <span className="font-semibold">{source.title}</span>
-                                    <span className="text-slate-500"> ({source.source})</span>
-                                    <br />
-                                    <span className="text-blue-600 text-xs ml-5">{source.url}</span>
-                                </li>
+                                <a
+                                    key={i}
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all group"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-blue-700 transition-colors">
+                                            <span className="text-xs font-bold text-white">{i + 1}</span>
+                                        </div>
+                                        <div className="flex-grow min-w-0">
+                                            <h4 className="font-semibold text-sm text-navy-900 group-hover:text-blue-600 transition-colors break-words">
+                                                {source.title}
+                                            </h4>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
+                                                    {source.source}
+                                                </span>
+                                                <p className="text-xs text-blue-500 break-all truncate">
+                                                    {source.url}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 group-hover:text-blue-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </div>
+                                </a>
                             ))}
-                        </ol>
-                    </div>
+                        </div>
 
-                    <p className="text-[11px] text-slate-500 mt-5 pt-4 border-t border-blue-100">
-                        These sources were automatically searched and used to provide current, relevant information for this lesson.
-                    </p>
-                </div>
-            )}
+                        {/* Print-friendly version (PDF) */}
+                        <div className="sources-print-list">
+                            <ol className="list-decimal list-inside space-y-2 text-sm text-slate-700">
+                                {data.sourceLinks.map((source, i) => (
+                                    <li key={i} className="leading-relaxed">
+                                        <span className="font-semibold">{source.title}</span>
+                                        <span className="text-slate-500"> ({source.source})</span>
+                                        <br />
+                                        <span className="text-blue-600 text-xs ml-5">{source.url}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+
+                        <p className="text-[11px] text-slate-600 mt-5 pt-4 border-t border-blue-200">
+                            These sources were automatically searched during lesson generation to ensure current, accurate information.
+                        </p>
+                    </>
+                ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-yellow-800 font-medium flex items-center gap-2">
+                            <span>⚠️</span>
+                            <span>No web sources were retrieved during generation</span>
+                        </p>
+                        <p className="text-xs text-yellow-700 mt-2 ml-6">
+                            This may happen if: the web search service is unavailable, network is slow, or no relevant sources were found. The lesson was still generated with the AI model's built-in knowledge.
+                        </p>
+                    </div>
+                )}
+            </div>
 
             {/* Chat Widget */}
             <div className="mt-12 print:break-inside-avoid">

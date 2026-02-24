@@ -92,25 +92,147 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
            </p>
         </div>
         
-        <div className="max-w-md mx-auto bg-white rounded-lg p-6 shadow-sm border border-slate-100 space-y-3 opacity-60">
-             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-navy-900 w-1/3 animate-progress"></div>
+        <div className="max-w-md mx-auto bg-white rounded-lg p-6 shadow-sm border border-slate-100 space-y-4">
+             {/* Progress Bar */}
+             <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                   <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Progress</span>
+                   <span className="text-sm font-bold text-gold-600">{Math.ceil((loadingMsgIndex / loadingMessages.length) * 100)}%</span>
+                </div>
+                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                   <div
+                     className="h-full bg-gradient-to-r from-gold-500 to-gold-600 transition-all duration-300 ease-out rounded-full shadow-sm"
+                     style={{width: `${Math.ceil((loadingMsgIndex / loadingMessages.length) * 100)}%`}}
+                   ></div>
+                </div>
              </div>
-             <div className="flex justify-between text-xs text-slate-400 font-medium tracking-wide uppercase">
-                <span>Initialization</span>
-                <span>Drafting</span>
-                <span>Review</span>
+
+             {/* Stage Indicators */}
+             <div className="flex justify-between text-xs font-semibold uppercase tracking-wide">
+                <span className={loadingMsgIndex >= 0 ? 'text-gold-600' : 'text-slate-300'}>Search</span>
+                <span className={loadingMsgIndex >= 2 ? 'text-gold-600' : 'text-slate-300'}>Generate</span>
+                <span className={loadingMsgIndex >= 4 ? 'text-gold-600' : 'text-slate-300'}>Refine</span>
              </div>
         </div>
       </div>
     );
   }
 
+  // Quick preset configurations
+  const applyPreset = (type: 'academic' | 'practical' | 'simple' | 'comprehensive') => {
+    const presets = {
+      academic: {
+        level: AcademicLevel.MASTER,
+        depth: LessonDepth.ADVANCED,
+        focus: LessonFocus.THEORETICAL,
+        structure: {
+          bulletPoints: true,
+          tables: true,
+          summaries: true,
+          stepByStep: false,
+          caseLaw: true,
+          doctrines: true,
+          comparativeAnalysis: true,
+          practicalExercises: false,
+          glossary: true,
+          bibliography: true,
+        }
+      },
+      practical: {
+        level: AcademicLevel.BACHELOR,
+        depth: LessonDepth.STANDARD,
+        focus: LessonFocus.PRACTICAL,
+        structure: {
+          bulletPoints: true,
+          tables: true,
+          summaries: true,
+          stepByStep: true,
+          caseLaw: true,
+          doctrines: false,
+          comparativeAnalysis: false,
+          practicalExercises: true,
+          glossary: true,
+          bibliography: false,
+        }
+      },
+      simple: {
+        level: AcademicLevel.BACHELOR,
+        depth: LessonDepth.OVERVIEW,
+        focus: LessonFocus.THEORETICAL,
+        structure: {
+          bulletPoints: true,
+          tables: false,
+          summaries: true,
+          stepByStep: false,
+          caseLaw: false,
+          doctrines: false,
+          comparativeAnalysis: false,
+          practicalExercises: false,
+          glossary: true,
+          bibliography: false,
+        }
+      },
+      comprehensive: {
+        level: AcademicLevel.PHD,
+        depth: LessonDepth.ADVANCED,
+        focus: LessonFocus.CASE_BASED,
+        structure: {
+          bulletPoints: true,
+          tables: true,
+          summaries: true,
+          stepByStep: true,
+          caseLaw: true,
+          doctrines: true,
+          comparativeAnalysis: true,
+          practicalExercises: true,
+          glossary: true,
+          bibliography: true,
+        }
+      }
+    };
+
+    setForm(prev => ({ ...prev, ...presets[type] }));
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-16 animate-fade-in-up">
-      <div className="mb-12">
+      <div className="mb-8">
         <h1 className="font-serif text-4xl font-bold text-navy-900 mb-3">{t.configure}</h1>
         <p className="text-slate-500 text-lg">{t.configureSubtitle}</p>
+      </div>
+
+      {/* Quick Presets */}
+      <div className="mb-12 p-6 bg-gradient-to-r from-gold-50 to-blue-50 rounded-xl border border-gold-100">
+        <h3 className="font-semibold text-navy-900 mb-4 flex items-center gap-2">
+          <span>⚡</span>
+          Quick Presets - Get started in one click:
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button
+            onClick={() => applyPreset('simple')}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
+          >
+            📚 Simple
+          </button>
+          <button
+            onClick={() => applyPreset('practical')}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
+          >
+            🔧 Practical
+          </button>
+          <button
+            onClick={() => applyPreset('academic')}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
+          >
+            🎓 Academic
+          </button>
+          <button
+            onClick={() => applyPreset('comprehensive')}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
+          >
+            🏆 Complete
+          </button>
+        </div>
       </div>
 
       {error && (
