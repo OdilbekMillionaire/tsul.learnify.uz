@@ -4,7 +4,7 @@
  * Fetches relevant sources to enrich lesson content with current information
  */
 
-import { ENV } from '../_core/env';
+import { ENV } from '../../_core/env';
 
 const { forgeApiUrl, forgeApiKey } = ENV;
 
