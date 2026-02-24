@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import OpenAI from "openai";
 import { LessonFormState, LessonResponse, Language, LessonFocus } from '../types';
+import { searchForTopic, createBibliographyFromSearch } from './searchService';
 
 // ==========================================
 // CONFIGURATION & CLIENT INITIALIZATION
@@ -140,7 +141,23 @@ async function callOpenAICompatible(
 
 export const generateLesson = async (form: LessonFormState, language: Language): Promise<LessonResponse> => {
   const persona = getExpertPersona(form.module);
-  
+
+  // Fetch real-time information from web search (non-blocking)
+  let searchResults: any[] = [];
+  let searchBibliography: string[] = [];
+  try {
+    // Search for current information about the topic
+    const searchQueries = [form.topic, `${form.module} ${form.topic}`, `${form.topic} latest developments`];
+    const allResults = await Promise.all(
+      searchQueries.map(q => searchForTopic(q, 3).catch(() => []))
+    );
+    searchResults = allResults.flat().slice(0, 5);
+    searchBibliography = createBibliographyFromSearch(searchResults);
+    console.log(`Found ${searchResults.length} search results for topic enrichment`);
+  } catch (searchError) {
+    console.warn('Web search enrichment skipped (non-critical):', searchError);
+  }
+
   // Construct Focus Instructions
   let focusInstruction = "";
   switch(form.focus) {
@@ -188,7 +205,16 @@ export const generateLesson = async (form: LessonFormState, language: Language):
     required: requiredFields
   };
 
-  // Base Prompt
+  // Base Prompt with web search context
+  const webSearchContext = searchResults.length > 0
+    ? `
+    Recent Information (from web search):
+    ${searchResults.map(r => `- ${r.title}: ${r.description}`).join('\n')}
+
+    Note: Consider current developments and recent information while generating the lesson.
+    `
+    : '';
+
   const corePrompt = `
     Role: You are ${persona} at TSUL (Tashkent State University of Law).
     Task: Generate a high-fidelity, university-grade academic lesson.
@@ -196,12 +222,16 @@ export const generateLesson = async (form: LessonFormState, language: Language):
     Module: ${form.module}
     Topic: ${form.topic}
     Level: ${form.level}
-    
+
+    ${webSearchContext}
+
     Strategy: ${focusInstruction}
-    
+
     Requirements:
     - Output strictly valid JSON.
     - Ensure court cases are real/historically accurate.
+    - Use **bold** for emphasis and *italics* for technical terms (support markdown formatting).
+    - Include numbered lists and bullet points using markdown syntax (-, 1. 2. etc.)
     ${structureReqs}
   `;
 
@@ -215,7 +245,16 @@ export const generateLesson = async (form: LessonFormState, language: Language):
 
   // 1. Try Gemini Pro
   try {
-    return await callGemini(corePrompt, lessonSchema, 'gemini-3-pro-preview');
+    const lesson = await callGemini(corePrompt, lessonSchema, 'gemini-3-pro-preview');
+
+    // Enhance bibliography with search results if available
+    if (searchBibliography.length > 0 && lesson.bibliography) {
+      lesson.bibliography = [...new Set([...lesson.bibliography, ...searchBibliography])].slice(0, 15);
+    } else if (searchBibliography.length > 0) {
+      lesson.bibliography = searchBibliography;
+    }
+
+    return lesson;
   } catch (err: any) {
     console.warn("Gemini Pro failed:", err.message);
 
@@ -231,7 +270,16 @@ export const generateLesson = async (form: LessonFormState, language: Language):
       
       // 2. Try OpenAI (GPT-4o)
       try {
-        return await callOpenAICompatible(getOpenAIClient, "OpenAI", "gpt-4o", openAISystemPrompt, corePrompt);
+        const lesson = await callOpenAICompatible(getOpenAIClient, "OpenAI", "gpt-4o", openAISystemPrompt, corePrompt);
+
+        // Enhance bibliography with search results
+        if (searchBibliography.length > 0 && lesson.bibliography) {
+          lesson.bibliography = [...new Set([...lesson.bibliography, ...searchBibliography])].slice(0, 15);
+        } else if (searchBibliography.length > 0) {
+          lesson.bibliography = searchBibliography;
+        }
+
+        return lesson;
       } catch (openaiErr: any) {
         console.warn("OpenAI failed:", openaiErr.message);
         console.warn("Switching to Groq...");
@@ -239,7 +287,16 @@ export const generateLesson = async (form: LessonFormState, language: Language):
         // 3. Try Groq (Llama 3)
         try {
           // Llama 3.3 70b is excellent at JSON and complex reasoning
-          return await callOpenAICompatible(getGroqClient, "Groq", "llama-3.3-70b-versatile", openAISystemPrompt, corePrompt);
+          const lesson = await callOpenAICompatible(getGroqClient, "Groq", "llama-3.3-70b-versatile", openAISystemPrompt, corePrompt);
+
+          // Enhance bibliography with search results
+          if (searchBibliography.length > 0 && lesson.bibliography) {
+            lesson.bibliography = [...new Set([...lesson.bibliography, ...searchBibliography])].slice(0, 15);
+          } else if (searchBibliography.length > 0) {
+            lesson.bibliography = searchBibliography;
+          }
+
+          return lesson;
         } catch (groqErr: any) {
           console.error("CRITICAL: All AI providers failed.");
           throw new Error("All AI services are currently unavailable. Please try again later.");

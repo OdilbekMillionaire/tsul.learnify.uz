@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LessonResponse, Language, ChatMessage } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { ChatWidget } from './ChatWidget';
+import ReactMarkdown from 'react-markdown';
 
 interface LessonRendererProps {
   data: LessonResponse;
@@ -92,16 +93,16 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
         {/* SIDEBAR (Left on desktop) */}
         <div className="lg:col-span-4 print:col-span-4 space-y-6">
           {/* Metadata Card */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm sticky top-24 print:static print:border print:shadow-none">
-             <span className="text-xs font-bold tracking-widest text-gold-600 uppercase mb-2 block">{data.module}</span>
-             <h1 className="font-serif text-2xl font-bold text-navy-900 mb-6 leading-tight">{data.title}</h1>
+          <div className="bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl border border-slate-200 shadow-sm sticky top-24 print:static print:border print:shadow-none">
+             <span className="text-xs font-bold tracking-widest text-gold-600 dark:text-gold-400 uppercase mb-2 block">{data.module}</span>
+             <h1 className="font-serif text-2xl font-bold text-navy-900 dark:text-slate-100 mb-6 leading-tight">{data.title}</h1>
              
              <div className="space-y-6">
                 <div>
-                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t.objectives}</h3>
+                   <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t.objectives}</h3>
                    <ul className="space-y-2">
                     {data.objectives.map((obj, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-slate-700 leading-relaxed">
+                        <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                         <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         {obj}
                         </li>
@@ -109,22 +110,22 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                    </ul>
                 </div>
 
-                <div className="pt-6 border-t border-slate-100">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t.concepts}</h3>
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
+                    <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{t.concepts}</h3>
                     <div className="flex flex-wrap gap-2">
                         {data.concepts.map((c, i) => (
-                            <span key={i} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium border border-slate-200 print:border-slate-300">
+                            <span key={i} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-xs font-medium border border-slate-200 dark:border-slate-600 print:border-slate-300">
                             {c}
                             </span>
                         ))}
                     </div>
                 </div>
 
-                <div className="pt-6 border-t border-slate-100">
-                    <h3 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3">{t.mistakes}</h3>
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
+                    <h3 className="text-xs font-bold text-red-400 dark:text-red-400 uppercase tracking-wider mb-3">{t.mistakes}</h3>
                     <ul className="space-y-2">
                         {data.commonMistakes.map((m, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
                                 <span className="text-red-500 font-bold">×</span>
                                 {m}
                             </li>
@@ -139,37 +140,76 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
         <div className="lg:col-span-8 print:col-span-8 space-y-8 print:space-y-6">
             
             {/* Definition */}
-            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
-                <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
+            <div className="bg-white dark:bg-slate-800 dark:border-slate-700 p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
+                <h2 className="font-serif text-2xl font-bold text-navy-900 dark:text-slate-100 mb-6 flex items-center gap-3">
                     <span className="w-1 h-8 bg-gold-500 rounded-full print:bg-gold-500"></span>
                     {data.definitionAndStructure.title}
                 </h2>
-                <div className="prose prose-slate prose-lg max-w-none text-slate-700 leading-relaxed text-justify">
-                    {data.definitionAndStructure.content}
-                </div>
+                <ReactMarkdown
+                  components={{
+                    p: ({node, ...props}: any) => <p className="mb-4 last:mb-0" {...props} />,
+                    strong: ({node, ...props}: any) => <strong className="font-bold text-navy-900 dark:text-slate-100" {...props} />,
+                    em: ({node, ...props}: any) => <em className="italic" {...props} />,
+                    ul: ({node, ...props}: any) => <ul className="list-disc list-inside my-3 ml-2" {...props} />,
+                    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside my-3 ml-2" {...props} />,
+                    li: ({node, ...props}: any) => <li className="mb-2 ml-2" {...props} />,
+                    code: ({node, inline, ...props}: any) =>
+                      inline ?
+                        <code className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-xs font-mono" {...props} /> :
+                        <code className="block bg-slate-100 dark:bg-slate-700 p-3 rounded text-xs font-mono overflow-x-auto my-3" {...props} />
+                  }}
+                >
+                  {data.definitionAndStructure.content}
+                </ReactMarkdown>
             </div>
 
             {/* Historical Development */}
-            <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
-                <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
+            <div className="bg-white dark:bg-slate-800 dark:border-slate-700 p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
+                <h2 className="font-serif text-2xl font-bold text-navy-900 dark:text-slate-100 mb-6 flex items-center gap-3">
                     <span className="w-1 h-8 bg-gold-500 rounded-full"></span>
                     {data.historicalDevelopment.title}
                 </h2>
-                <div className="prose prose-slate prose-lg max-w-none text-slate-700 leading-relaxed text-justify">
-                    {data.historicalDevelopment.content}
-                </div>
+                <ReactMarkdown
+                  components={{
+                    p: ({node, ...props}: any) => <p className="mb-4 last:mb-0" {...props} />,
+                    strong: ({node, ...props}: any) => <strong className="font-bold text-navy-900 dark:text-slate-100" {...props} />,
+                    em: ({node, ...props}: any) => <em className="italic" {...props} />,
+                    ul: ({node, ...props}: any) => <ul className="list-disc list-inside my-3 ml-2" {...props} />,
+                    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside my-3 ml-2" {...props} />,
+                    li: ({node, ...props}: any) => <li className="mb-2 ml-2" {...props} />,
+                    code: ({node, inline, ...props}: any) =>
+                      inline ?
+                        <code className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-xs font-mono" {...props} /> :
+                        <code className="block bg-slate-100 dark:bg-slate-700 p-3 rounded text-xs font-mono overflow-x-auto my-3" {...props} />
+                  }}
+                >
+                  {data.historicalDevelopment.content}
+                </ReactMarkdown>
             </div>
 
             {/* Comparative Analysis (Optional) */}
             {data.comparativeAnalysis && (
-                <div className="bg-white p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
-                    <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6 flex items-center gap-3">
+                <div className="bg-white dark:bg-slate-800 dark:border-slate-700 p-8 md:p-10 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border print:p-6">
+                    <h2 className="font-serif text-2xl font-bold text-navy-900 dark:text-slate-100 mb-6 flex items-center gap-3">
                         <span className="w-1 h-8 bg-purple-500 rounded-full"></span>
                         {data.comparativeAnalysis.title || t.comparativeAnalysis}
                     </h2>
-                    <div className="prose prose-slate prose-lg max-w-none text-slate-700 leading-relaxed text-justify">
-                        {data.comparativeAnalysis.content}
-                    </div>
+                    <ReactMarkdown
+                      components={{
+                        p: ({node, ...props}: any) => <p className="mb-4 last:mb-0" {...props} />,
+                        strong: ({node, ...props}: any) => <strong className="font-bold text-navy-900 dark:text-slate-100" {...props} />,
+                        em: ({node, ...props}: any) => <em className="italic" {...props} />,
+                        ul: ({node, ...props}: any) => <ul className="list-disc list-inside my-3 ml-2" {...props} />,
+                        ol: ({node, ...props}: any) => <ol className="list-decimal list-inside my-3 ml-2" {...props} />,
+                        li: ({node, ...props}: any) => <li className="mb-2 ml-2" {...props} />,
+                        code: ({node, inline, ...props}: any) =>
+                          inline ?
+                            <code className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-xs font-mono" {...props} /> :
+                            <code className="block bg-slate-100 dark:bg-slate-700 p-3 rounded text-xs font-mono overflow-x-auto my-3" {...props} />
+                      }}
+                    >
+                      {data.comparativeAnalysis.content}
+                    </ReactMarkdown>
                 </div>
             )}
 
@@ -184,15 +224,15 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4">
                         {data.courtCases.map((c, i) => (
-                            <div key={i} className="bg-slate-50 p-6 rounded-xl border border-slate-200 hover:border-gold-300 transition-colors group print:border-slate-300 print:bg-slate-50">
+                            <div key={i} className="bg-slate-50 dark:bg-slate-700 p-6 rounded-xl border border-slate-200 dark:border-slate-600 hover:border-gold-300 transition-colors group print:border-slate-300 print:bg-slate-50">
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{c.year}</span>
-                                    <span className="text-[10px] font-semibold text-navy-800 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-sm">{c.court}</span>
+                                    <span className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">{c.year}</span>
+                                    <span className="text-[10px] font-semibold text-navy-800 dark:text-slate-100 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 px-2 py-0.5 rounded shadow-sm">{c.court}</span>
                                 </div>
-                                <h3 className="font-serif font-bold text-lg text-navy-900 mb-3 group-hover:text-gold-600 transition-colors">{c.name}</h3>
-                                <div className="space-y-2 text-sm text-slate-600">
-                                    <p><span className="font-semibold text-navy-900">Issue:</span> {c.legalIssue}</p>
-                                    <p><span className="font-semibold text-navy-900">Holding:</span> {c.holding}</p>
+                                <h3 className="font-serif font-bold text-lg text-navy-900 dark:text-slate-100 mb-3 group-hover:text-gold-600 transition-colors">{c.name}</h3>
+                                <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                                    <p><span className="font-semibold text-navy-900 dark:text-slate-100">Issue:</span> {c.legalIssue}</p>
+                                    <p><span className="font-semibold text-navy-900 dark:text-slate-100">Holding:</span> {c.holding}</p>
                                 </div>
                             </div>
                         ))}
@@ -202,8 +242,8 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Practical Exercises (Optional) */}
             {data.practicalExercises && data.practicalExercises.length > 0 && (
-                 <div className="bg-blue-50 p-8 rounded-xl border border-blue-100 print:bg-blue-50 print:border-blue-200 print:break-inside-avoid">
-                    <h2 className="font-serif text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
+                 <div className="bg-blue-50 dark:bg-slate-800 dark:border-slate-700 p-8 rounded-xl border border-blue-100 print:bg-blue-50 print:border-blue-200 print:break-inside-avoid">
+                    <h2 className="font-serif text-2xl font-bold text-blue-900 dark:text-blue-300 mb-6 flex items-center gap-3">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
@@ -211,11 +251,11 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
                     </h2>
                     <div className="space-y-6">
                         {data.practicalExercises.map((ex, i) => (
-                            <div key={i} className="bg-white p-6 rounded-lg shadow-sm print:border print:border-slate-200 print:shadow-none">
-                                <h4 className="font-bold text-navy-900 mb-2">Scenario {i+1}:</h4>
-                                <p className="text-slate-700 italic mb-4 text-sm">{ex.question}</p>
-                                <div className="bg-slate-50 p-4 rounded text-sm text-slate-600 border-l-2 border-gold-500 print:bg-slate-50">
-                                    <span className="font-bold text-gold-700 block mb-1">Answer / Guidance:</span>
+                            <div key={i} className="bg-white dark:bg-slate-700 p-6 rounded-lg shadow-sm print:border print:border-slate-200 print:shadow-none dark:border dark:border-slate-600">
+                                <h4 className="font-bold text-navy-900 dark:text-slate-100 mb-2">Scenario {i+1}:</h4>
+                                <p className="text-slate-700 dark:text-slate-300 italic mb-4 text-sm">{ex.question}</p>
+                                <div className="bg-slate-50 dark:bg-slate-600 p-4 rounded text-sm text-slate-600 dark:text-slate-300 border-l-2 border-gold-500 print:bg-slate-50">
+                                    <span className="font-bold text-gold-700 dark:text-gold-400 block mb-1">Answer / Guidance:</span>
                                     {ex.answer}
                                 </div>
                             </div>
@@ -226,19 +266,19 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Doctrines */}
             {data.legalDoctrines && data.legalDoctrines.length > 0 && (
-                <div className="bg-[#fffbf0] p-8 rounded-xl border border-gold-100 relative overflow-hidden print:bg-[#fffbf0] print:border-gold-200 print:break-inside-avoid">
+                <div className="bg-[#fffbf0] dark:bg-slate-800 dark:border-slate-700 p-8 rounded-xl border border-gold-100 relative overflow-hidden print:bg-[#fffbf0] print:border-gold-200 print:break-inside-avoid">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
                         <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg>
                     </div>
-                    <h2 className="font-serif text-2xl font-bold text-gold-800 mb-6 relative z-10">{t.doctrines}</h2>
+                    <h2 className="font-serif text-2xl font-bold text-gold-800 dark:text-gold-400 mb-6 relative z-10">{t.doctrines}</h2>
                     <div className="space-y-6 relative z-10">
                         {data.legalDoctrines.map((d, i) => (
-                            <div key={i} className="border-l-4 border-gold-400 pl-4 py-1">
-                                <h4 className="font-serif font-bold text-lg text-navy-900">{d.name}</h4>
-                                <p className="text-slate-700 mt-1 italic">{d.definition}</p>
+                            <div key={i} className="border-l-4 border-gold-400 dark:border-gold-500 pl-4 py-1">
+                                <h4 className="font-serif font-bold text-lg text-navy-900 dark:text-slate-100">{d.name}</h4>
+                                <p className="text-slate-700 dark:text-slate-300 mt-1 italic">{d.definition}</p>
                                 <div className="mt-2 flex gap-4 text-xs">
-                                    <span className="text-gold-700 font-semibold">Origin: {d.origin}</span>
-                                    <span className="text-slate-500">Status: {d.currentStatus}</span>
+                                    <span className="text-gold-700 dark:text-gold-400 font-semibold">Origin: {d.origin}</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Status: {d.currentStatus}</span>
                                 </div>
                             </div>
                         ))}
@@ -248,13 +288,13 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
              {/* Glossary (Optional) */}
              {data.glossary && data.glossary.length > 0 && (
-                <div className="bg-white p-8 rounded-xl border border-slate-200 print:border print:shadow-none">
-                    <h2 className="font-serif text-2xl font-bold text-navy-900 mb-6">{t.glossary}</h2>
+                <div className="bg-white dark:bg-slate-800 dark:border-slate-700 p-8 rounded-xl border border-slate-200 print:border print:shadow-none">
+                    <h2 className="font-serif text-2xl font-bold text-navy-900 dark:text-slate-100 mb-6">{t.glossary}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                         {data.glossary.map((item, i) => (
-                            <div key={i} className="flex flex-col border-b border-slate-100 pb-2 last:border-0">
-                                <span className="font-bold text-navy-800 text-sm">{item.term}</span>
-                                <span className="text-slate-600 text-xs">{item.definition}</span>
+                            <div key={i} className="flex flex-col border-b border-slate-100 dark:border-slate-700 pb-2 last:border-0">
+                                <span className="font-bold text-navy-800 dark:text-slate-100 text-sm">{item.term}</span>
+                                <span className="text-slate-600 dark:text-slate-400 text-xs">{item.definition}</span>
                             </div>
                         ))}
                     </div>
@@ -263,9 +303,9 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
              {/* Bibliography (Optional) */}
              {data.bibliography && data.bibliography.length > 0 && (
-                <div className="bg-slate-50 p-8 rounded-xl border border-slate-200 print:bg-slate-50 print:border">
-                    <h2 className="font-serif text-xl font-bold text-navy-900 mb-4">{t.bibliography}</h2>
-                    <ul className="list-disc list-inside space-y-2 text-sm text-slate-700">
+                <div className="bg-slate-50 dark:bg-slate-800 dark:border-slate-700 p-8 rounded-xl border border-slate-200 print:bg-slate-50 print:border">
+                    <h2 className="font-serif text-xl font-bold text-navy-900 dark:text-slate-100 mb-4">{t.bibliography}</h2>
+                    <ul className="list-disc list-inside space-y-2 text-sm text-slate-700 dark:text-slate-300">
                         {data.bibliography.map((item, i) => (
                             <li key={i}>{item}</li>
                         ))}
@@ -274,7 +314,7 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
             )}
 
             {/* Conclusion */}
-            <div className="bg-navy-900 text-slate-300 p-8 rounded-xl border border-navy-800 shadow-lg print:bg-navy-900 print:text-slate-300 print:break-inside-avoid">
+            <div className="bg-navy-900 dark:bg-slate-900 text-slate-300 p-8 rounded-xl border border-navy-800 dark:border-slate-700 shadow-lg print:bg-navy-900 print:text-slate-300 print:break-inside-avoid">
                 <h2 className="font-serif text-xl font-bold text-white mb-4">{t.conclusion}</h2>
                 <p className="leading-relaxed text-justify font-light">
                     {data.conclusion}
@@ -283,15 +323,15 @@ export const LessonRenderer: React.FC<LessonRendererProps> = ({ data, currentLan
 
             {/* Chat Widget */}
             <div className="mt-12 print:break-inside-avoid">
-                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden print:overflow-visible print:shadow-none print:border print:border-slate-300">
-                    <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between print:bg-slate-100">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden print:overflow-visible print:shadow-none print:border print:border-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600 p-4 flex items-center justify-between print:bg-slate-100">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm">
+                            <div className="w-10 h-10 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded-full flex items-center justify-center shadow-sm">
                                 <span className="text-xl">🤖</span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-navy-900 text-sm">{t.aiTeacher}</h3>
-                                <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                <h3 className="font-bold text-navy-900 dark:text-slate-100 text-sm">{t.aiTeacher}</h3>
+                                <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 print:border print:border-green-600"></span>
                                     Online
                                 </p>
