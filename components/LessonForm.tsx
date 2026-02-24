@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Language, LessonFormState, AcademicLevel, LessonDepth, SimplicityLevel, LessonFocus } from '../types';
 import { TRANSLATIONS, MODULES_BY_LANGUAGE, MODULE_DESCRIPTIONS } from '../constants';
+import { estimateCost } from '../services/creditEstimator';
+import { CostEstimateDisplay } from './CostEstimateDisplay';
 
 interface LessonFormProps {
   currentLang: Language;
   onSubmit: (data: LessonFormState) => void;
   isLoading: boolean;
   error: string | null;
+  userCredits?: number;
 }
 
-export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, isLoading, error }) => {
+export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, isLoading, error, userCredits = 5000 }) => {
   const t = TRANSLATIONS[currentLang];
   const modules = MODULES_BY_LANGUAGE[currentLang];
 
@@ -35,7 +38,8 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
   });
 
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
-  
+  const [costEstimate, setCostEstimate] = useState(() => estimateCost(form));
+
   const loadingMessages = [
     "Analyzing academic databases...",
     "Structuring legal arguments...",
@@ -55,6 +59,11 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
       setLoadingMsgIndex(0);
     }
   }, [isLoading]);
+
+  // Update cost estimate whenever form changes
+  useEffect(() => {
+    setCostEstimate(estimateCost(form));
+  }, [form]);
 
   const handleSubmit = () => {
     if (!form.module || !form.topic) return;
@@ -322,8 +331,17 @@ export const LessonForm: React.FC<LessonFormProps> = ({ currentLang, onSubmit, i
         </div>
       </div>
 
+      {/* Cost Estimate Display */}
+      <div className="mt-8 max-w-5xl mx-auto">
+        <CostEstimateDisplay
+          estimate={costEstimate}
+          userCredits={userCredits}
+          isLoading={isLoading}
+        />
+      </div>
+
       {/* Sticky Action Bar */}
-      <div className="mt-12 sticky bottom-6 z-40">
+      <div className="mt-8 sticky bottom-6 z-40">
         <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-slate-200/60 flex items-center justify-between max-w-5xl mx-auto">
            <button 
              className="px-6 py-3 rounded-xl text-slate-500 font-medium hover:bg-slate-100 transition-colors text-sm"

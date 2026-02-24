@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Language, ViewState } from '../types';
 import { TRANSLATIONS } from '../constants';
+import { ThemeToggle } from './ThemeToggle';
+import { formatCredits } from '../services/creditEstimator';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,9 +10,10 @@ interface LayoutProps {
   onLangChange: (lang: Language) => void;
   currentPage: ViewState;
   onNavigate: (page: ViewState) => void;
+  userCredits?: number;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangChange, currentPage, onNavigate }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangChange, currentPage, onNavigate, userCredits }) => {
   const t = TRANSLATIONS[currentLang];
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
@@ -99,6 +102,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentLang, onLangCha
               </button>
             ))}
           </nav>
+
+          {/* Credits Display */}
+          {typeof userCredits !== 'undefined' && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-50 rounded-lg border border-blue-200">
+              <span className="text-xs font-medium text-blue-900">Credits:</span>
+              <span className="text-sm font-bold text-blue-600">{formatCredits(userCredits)}</span>
+            </div>
+          )}
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Language Selector */}
           <div className="relative" ref={langMenuRef}>

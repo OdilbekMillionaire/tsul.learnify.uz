@@ -100,3 +100,65 @@ export interface ChatMessage {
   role: 'user' | 'model';
   content: string;
 }
+
+// ===== NEW TYPES FOR FEATURES =====
+
+// Dark Mode / Theme
+export type Theme = 'light' | 'dark';
+
+// Cost Estimation
+export interface CostEstimate {
+  estimatedCredits: number;
+  estimatedSeconds: number;
+  breakdown: {
+    contentGeneration: number;
+    webSearch: number;
+    formatting: number;
+  };
+  confidence: 'high' | 'medium' | 'low';
+}
+
+// Custom Templates
+export interface LessonTemplate {
+  id: string;
+  name: string;
+  description: string;
+  formDefaults: LessonFormState;
+  createdAt: Date;
+  lastUsed?: Date;
+  isFavorite: boolean;
+}
+
+// Stored Lessons (for history)
+export interface StoredLesson {
+  id: string;
+  title: string;
+  module: string;
+  topic: string;
+  content: LessonResponse;
+  chatHistory: ChatMessage[];
+  createdAt: Date;
+  lastViewed: Date;
+  rating?: number;
+  userNotes?: string;
+  tags: string[];
+  sourceCredits: number;
+}
+
+// Streaming
+export interface LessonStreamChunk {
+  section: 'objectives' | 'concepts' | 'content' | 'exercises' | 'glossary' | 'bibliography';
+  partial: Partial<LessonResponse>;
+  progress: number;
+  isComplete: boolean;
+}
+
+// Export Formats
+export type ExportFormat = 'pdf' | 'markdown' | 'html';
+export interface ExportOptions {
+  format: ExportFormat;
+  includeChat: boolean;
+  includeSources: boolean;
+  includeMetadata: boolean;
+  fileName: string;
+}

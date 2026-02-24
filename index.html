@@ -48,11 +48,44 @@
       }
     </script>
     <style>
+      /* Dark Mode Variables */
+      :root {
+        color-scheme: light;
+      }
+
+      html[data-theme="dark"],
+      html.dark {
+        color-scheme: dark;
+      }
+
+      html.dark {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --border: #334155;
+      }
+
       /* Premium Background Texture */
       body {
         background-color: #f8fafc;
         background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
         background-size: 24px 24px;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      html.dark body {
+        background-color: #0f172a;
+        background-image: radial-gradient(#1e293b 1px, transparent 1px);
+      }
+
+      html.dark {
+        background-color: #0f172a;
+        color: #f1f5f9;
+      }
+
+      html.dark body {
+        color: #f1f5f9;
       }
 
       /* Custom scrollbar for academic feel */
@@ -167,6 +200,58 @@
       /* Hide Chat Widget in PDF */
       .pdf-exporting .chat-widget-root {
         display: none !important;
+      }
+
+      /* Dark Mode Component Styles */
+      html.dark header {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        border-bottom-color: #334155 !important;
+      }
+
+      html.dark footer {
+        background-color: #0f172a !important;
+        border-top-color: #1e293b !important;
+      }
+
+      html.dark input,
+      html.dark select,
+      html.dark textarea {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        border-color: #334155 !important;
+      }
+
+      html.dark input::placeholder,
+      html.dark textarea::placeholder {
+        color: #94a3b8 !important;
+      }
+
+      html.dark .bg-white {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+      }
+
+      html.dark .text-slate-900,
+      html.dark .text-navy-900 {
+        color: #f1f5f9 !important;
+      }
+
+      html.dark .text-slate-600,
+      html.dark .text-slate-500,
+      html.dark .text-slate-400 {
+        color: #cbd5e1 !important;
+      }
+
+      html.dark .hover\:bg-slate-50:hover {
+        background-color: #334155 !important;
+      }
+
+      html.dark .bg-slate-50 {
+        background-color: #1e293b !important;
+      }
+
+      html.dark .border-slate-200 {
+        border-color: #334155 !important;
       }
     </style>
 <script type="importmap">

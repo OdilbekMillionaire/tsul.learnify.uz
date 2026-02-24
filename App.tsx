@@ -4,11 +4,14 @@ import { Home } from './components/Home';
 import { LessonForm } from './components/LessonForm';
 import { LessonRenderer } from './components/LessonRenderer';
 import { About } from './components/About';
-import { Language, LessonFormState, LessonResponse, ViewState, ChatMessage } from './types';
+import { LessonHistoryView } from './components/LessonHistoryView';
+import { Language, LessonFormState, LessonResponse, ViewState, ChatMessage, StoredLesson } from './types';
 import { generateLesson } from './services/geminiService';
 import { TRANSLATIONS } from './constants';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { saveLesson, getAllLessons } from './services/lessonStorageService';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   // State initialization
   const [currentLang, setCurrentLang] = useState<Language>(() => {
     const saved = localStorage.getItem('learnify_lang');
@@ -19,14 +22,24 @@ const App: React.FC = () => {
   const [lessonData, setLessonData] = useState<LessonResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Lifted Chat State
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+
+  // Credits state
+  const [userCredits, setUserCredits] = useState<number>(() => {
+    const saved = localStorage.getItem('learnify_credits');
+    return saved ? parseInt(saved, 10) : 5000; // Default 5000 credits
+  });
 
   // Persistence
   useEffect(() => {
     localStorage.setItem('learnify_lang', currentLang);
   }, [currentLang]);
+
+  useEffect(() => {
+    localStorage.setItem('learnify_credits', userCredits.toString());
+  }, [userCredits]);
 
   // Handlers
   const handleLangChange = (lang: Language) => {
@@ -41,20 +54,41 @@ const App: React.FC = () => {
       setLessonData(data);
       // Initialize chat with greeting in current language
       setChatHistory([{ role: 'model', content: TRANSLATIONS[currentLang].aiGreeting }]);
+
+      // Auto-save lesson
+      const storedLesson: StoredLesson = {
+        id: `lesson_${Date.now()}`,
+        title: data.title,
+        module: formData.module,
+        topic: formData.topic,
+        content: data,
+        chatHistory: [{ role: 'model', content: TRANSLATIONS[currentLang].aiGreeting }],
+        createdAt: new Date(),
+        lastViewed: new Date(),
+        tags: [formData.module, formData.depth],
+        sourceCredits: 200, // Placeholder
+      };
+
+      try {
+        await saveLesson(storedLesson);
+      } catch (storageError) {
+        console.warn('Failed to save lesson to history:', storageError);
+      }
+
       setCurrentView('lesson');
     } catch (err: any) {
       console.error("Generation Error:", err);
-      
+
       let errorMessage = "Failed to generate lesson. Please check your API Key, internet connection, and try again.";
-      
+
       // Robust error checking for quota limits
       const errString = err?.toString() || "";
       const errMessage = err?.message || "";
-      
+
       if (
-        errString.includes("429") || 
-        errMessage.includes("429") || 
-        errString.toLowerCase().includes("quota") || 
+        errString.includes("429") ||
+        errMessage.includes("429") ||
+        errString.toLowerCase().includes("quota") ||
         errMessage.toLowerCase().includes("quota") ||
         errString.toLowerCase().includes("exhausted")
       ) {
@@ -64,7 +98,7 @@ const App: React.FC = () => {
       } else if (errString.includes("API key") || errMessage.includes("API key")) {
          errorMessage = "⚠️ Invalid API Key. Please check your configuration.";
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -88,6 +122,12 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSelectLessonFromHistory = (lesson: StoredLesson) => {
+    setLessonData(lesson.content);
+    setChatHistory(lesson.chatHistory);
+    setCurrentView('lesson');
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'landing':
@@ -106,9 +146,9 @@ const App: React.FC = () => {
         if (lessonData) {
           return (
             <div key="lesson">
-                <LessonRenderer 
-                data={lessonData} 
-                currentLang={currentLang} 
+                <LessonRenderer
+                data={lessonData}
+                currentLang={currentLang}
                 onBack={() => handleNavigate('create')}
                 chatHistory={chatHistory}
                 onChatHistoryChange={setChatHistory}
@@ -118,11 +158,12 @@ const App: React.FC = () => {
         }
         return (
             <div key="create-fallback">
-                <LessonForm 
-                    currentLang={currentLang} 
-                    onSubmit={handleGenerate} 
-                    isLoading={isLoading} 
+                <LessonForm
+                    currentLang={currentLang}
+                    onSubmit={handleGenerate}
+                    isLoading={isLoading}
                     error={error}
+                    userCredits={userCredits}
                 />
             </div>
         );
@@ -130,11 +171,12 @@ const App: React.FC = () => {
       default:
         return (
             <div key="create">
-                <LessonForm 
-                    currentLang={currentLang} 
-                    onSubmit={handleGenerate} 
-                    isLoading={isLoading} 
+                <LessonForm
+                    currentLang={currentLang}
+                    onSubmit={handleGenerate}
+                    isLoading={isLoading}
                     error={error}
+                    userCredits={userCredits}
                 />
             </div>
         );
@@ -142,14 +184,23 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout 
-      currentLang={currentLang} 
+    <Layout
+      currentLang={currentLang}
       onLangChange={handleLangChange}
       currentPage={currentView}
       onNavigate={handleNavigate}
+      userCredits={userCredits}
     >
       {renderContent()}
     </Layout>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 };
 
