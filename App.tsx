@@ -7,6 +7,8 @@ import { About } from './components/About';
 import { Language, LessonFormState, LessonResponse, ViewState, ChatMessage } from './types';
 import { generateLesson } from './services/geminiService';
 import { TRANSLATIONS } from './constants';
+import SplineRobot from './components/SplineRobot';
+
 
 const App: React.FC = () => {
   // State initialization
@@ -19,7 +21,7 @@ const App: React.FC = () => {
   const [lessonData, setLessonData] = useState<LessonResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Lifted Chat State
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
 
@@ -44,17 +46,17 @@ const App: React.FC = () => {
       setCurrentView('lesson');
     } catch (err: any) {
       console.error("Generation Error:", err);
-      
+
       let errorMessage = "Failed to generate lesson. Please check your API Key, internet connection, and try again.";
-      
+
       // Robust error checking for quota limits
       const errString = err?.toString() || "";
       const errMessage = err?.message || "";
-      
+
       if (
-        errString.includes("429") || 
-        errMessage.includes("429") || 
-        errString.toLowerCase().includes("quota") || 
+        errString.includes("429") ||
+        errMessage.includes("429") ||
+        errString.toLowerCase().includes("quota") ||
         errMessage.toLowerCase().includes("quota") ||
         errString.toLowerCase().includes("exhausted")
       ) {
@@ -62,9 +64,9 @@ const App: React.FC = () => {
       } else if (errString.includes("503") || errMessage.includes("503")) {
         errorMessage = "⚠️ AI Service Overloaded. Please try again in a few moments.";
       } else if (errString.includes("API key") || errMessage.includes("API key")) {
-         errorMessage = "⚠️ Invalid API Key. Please check your configuration.";
+        errorMessage = "⚠️ Invalid API Key. Please check your configuration.";
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -82,9 +84,9 @@ const App: React.FC = () => {
 
     // If users clicks "New Lesson", we reset data.
     if (page === 'create') {
-       setLessonData(null);
-       setChatHistory([]);
-       setError(null);
+      setLessonData(null);
+      setChatHistory([]);
+      setError(null);
     }
   };
 
@@ -92,63 +94,64 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'landing':
         return (
-            <div key="landing" className="animate-fade-in-up">
-                <Home currentLang={currentLang} onStartClick={() => handleNavigate('create')} />
-            </div>
+          <div key="landing" className="animate-fade-in-up">
+            <Home currentLang={currentLang} onStartClick={() => handleNavigate('create')} />
+          </div>
         );
       case 'about':
         return (
-            <div key="about" className="animate-fade-in-up">
-                <About currentLang={currentLang} />
-            </div>
+          <div key="about" className="animate-fade-in-up">
+            <About currentLang={currentLang} />
+          </div>
         );
       case 'lesson':
         if (lessonData) {
           return (
             <div key="lesson">
-                <LessonRenderer 
-                data={lessonData} 
-                currentLang={currentLang} 
+              <LessonRenderer
+                data={lessonData}
+                currentLang={currentLang}
                 onBack={() => handleNavigate('create')}
                 chatHistory={chatHistory}
                 onChatHistoryChange={setChatHistory}
-                />
+              />
             </div>
           );
         }
         return (
-            <div key="create-fallback">
-                <LessonForm 
-                    currentLang={currentLang} 
-                    onSubmit={handleGenerate} 
-                    isLoading={isLoading} 
-                    error={error}
-                />
-            </div>
+          <div key="create-fallback">
+            <LessonForm
+              currentLang={currentLang}
+              onSubmit={handleGenerate}
+              isLoading={isLoading}
+              error={error}
+            />
+          </div>
         );
       case 'create':
       default:
         return (
-            <div key="create">
-                <LessonForm 
-                    currentLang={currentLang} 
-                    onSubmit={handleGenerate} 
-                    isLoading={isLoading} 
-                    error={error}
-                />
-            </div>
+          <div key="create">
+            <LessonForm
+              currentLang={currentLang}
+              onSubmit={handleGenerate}
+              isLoading={isLoading}
+              error={error}
+            />
+          </div>
         );
     }
   };
 
   return (
-    <Layout 
-      currentLang={currentLang} 
+    <Layout
+      currentLang={currentLang}
       onLangChange={handleLangChange}
       currentPage={currentView}
       onNavigate={handleNavigate}
     >
       {renderContent()}
+      <SplineRobot />
     </Layout>
   );
 };
